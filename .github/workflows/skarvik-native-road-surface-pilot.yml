@@ -1,0 +1,66 @@
+name: SKARVIK - place genuine road surfaces in native 48km pilot
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-native-road-surface-pilot.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  road-pilot:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Preflight genuine UE road asset, existing world and original map protection
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong stage'}
+          if(!(Test-Path -LiteralPath 'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap')){throw 'Original D map missing'}
+          if(!(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'))){throw 'Native SKARVIK terrain absent'}
+          if(Test-Path -LiteralPath (Join-Path $root 'Saved\SkarvikRoadPilot\pre-road-pilot-20261031.umap')){throw 'Pilot was already attempted, refuse repeat'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Other editor running'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          if($free -lt 18){throw 'Less than 18GiB free C drive'}
+          $plan=Get-Content (Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json') -Raw|ConvertFrom-Json
+          if(@($plan.roads).Count -ne 382 -or @($plan.settlements).Count -ne 125){throw 'Masterplan changed or incomplete'}
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_road_mesh_pilot.py'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'Pilot source syntax failed'}
+          Write-Host 'SKARVIK_NATIVE_ROAD_PILOT_PREFLIGHT_PASSED=true'
+      - name: Place real City Sample asphalt tiles on one safe grade-checked route in C-only SKARVIK
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_road_mesh_pilot.py'
+          $env:SKARVIK_ROAD_MASTERPLAN=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $env:SKARVIK_NATIVE_ROAD_PILOT_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-native-road-mesh-pilot-report.json'
+          & $editor $project "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_NATIVE_ROAD_PILOT_REPORT)){throw "Unreal pilot did not produce report exit=$code"}
+          $r=Get-Content -LiteralPath $env:SKARVIK_NATIVE_ROAD_PILOT_REPORT -Raw|ConvertFrom-Json
+          Write-Host ("SKARVIK_NATIVE_REAL_ROAD_STATE="+$r.state)
+          Write-Host ("SKARVIK_NATIVE_REAL_ROAD_ACTORS="+$r.realStaticMeshActorsSaved)
+          Write-Host ("SKARVIK_NATIVE_REAL_ROAD_LENGTH_METRES="+$r.lengthMetres)
+          if($code -ne 0 -or $r.state -ne 'REAL_ROAD_MESH_PILOT_SAVED_NOT_DRIVEN' -or $r.realStaticMeshActorsSaved -lt 30){throw ("Unreal road mesh pilot failed: "+$r.error)}
+          Write-Host 'SKARVIK_REAL_ROAD_MESH_PILOT_SAVED=true'
+          Write-Host 'SKARVIK_382_REGIONAL_ROADS_NOT_FULLY_BUILT=true'
+          Write-Host 'SKARVIK_REAL_ROADS_NOT_SM5_DRIVEN=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-native-asphalt-pilot-results
+          path: skarvik-native-road-mesh-pilot-report.json
+          if-no-files-found: warn

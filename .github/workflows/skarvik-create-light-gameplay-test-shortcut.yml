@@ -1,0 +1,60 @@
+name: SKARVIK - add lightweight direct gameplay test shortcut for Intel Iris Xe
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-create-light-gameplay-test-shortcut.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  create-optional-performance-preview-shortcut:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Make separate low-load GAME shortcut without changing running game, world or old shortcuts
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted stage'}
+          $proj=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $map=Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'
+          $module=Join-Path $root 'Binaries\Win64\UnrealEditor-AnomaliaZPrigimalia.dll'
+          if(!(Test-Path $proj) -or !(Test-Path $map) -or !(Test-Path $module)){throw 'Native playable project missing'}
+          $editor=$null
+          foreach($candidate in @($env:UE_ROOT,'C:\Program Files\Epic Games\UE_5.8')){
+            if(!$candidate){continue}
+            $try=Join-Path $candidate 'Engine\Binaries\Win64\UnrealEditor.exe'
+            if(Test-Path $try){$editor=$try;break}
+          }
+          if(!$editor){throw 'UE5.8 editor not installed'}
+          $desktop=[Environment]::GetFolderPath('Desktop')
+          if(!(Test-Path $desktop)){throw 'Desktop unavailable'}
+          $new=Join-Path $desktop 'ANOMALIAZ - JOUER SKARVIK TEST MODE LEGER.lnk'
+          if(Test-Path -LiteralPath $new){throw 'Never replace even a same-name shortcut without review'}
+          $cvars='r.ScreenPercentage 60,r.ShadowQuality 0,r.ViewDistanceScale 0.6,r.DynamicGlobalIlluminationMethod 0,r.ReflectionMethod 0,r.MotionBlurQuality 0,r.PostProcessAAQuality 2,stat fps'
+          $mapUrl='/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1?AnomaliaZPrigimaliaServerId=skarvik-light-test'
+          $shell=New-Object -ComObject WScript.Shell
+          $shortcut=$shell.CreateShortcut($new)
+          $shortcut.TargetPath=$editor
+          $shortcut.Arguments=('"'+$proj+'" "'+$mapUrl+'" -game -windowed -ResX=960 -ResY=540 -d3d11 -log -ExecCmds="'+$cvars+'"')
+          $shortcut.WorkingDirectory=$root
+          $shortcut.Description='Test leger Intel Iris Xe. Le terrain reste identique. Ne pas lancer pendant autre session Unreal.'
+          $shortcut.Save()
+          $confirm=$shell.CreateShortcut($new)
+          if(!(Test-Path $new) -or $confirm.TargetPath -ne $editor -or $confirm.Arguments -notmatch ' -game ' -or $confirm.Arguments -notmatch 'r.ScreenPercentage 60' -or $confirm.Arguments -notmatch 'PRIGIMALIA_SKARVIK_FINAL_v1'){
+            throw 'Shortcut validation failed'
+          }
+          Write-Host 'SKARVIK_LIGHT_GAMEPLAY_SHORTCUT_CREATED=true'
+          Write-Host 'SKARVIK_LIGHT_GRAPHICS_PRESET_CONFIGURED=true'
+          Write-Host 'SKARVIK_LIGHT_GAMEPLAY_STARTED_OR_VERIFIED=false'
+          Write-Host 'SKARVIK_ORIGINAL_LEVELS_AND_RUNNING_GAME_UNCHANGED=true'
+          Write-Host ('SKARVIK_LIGHT_SHORTCUT_NAME='+[IO.Path]::GetFileName($new))

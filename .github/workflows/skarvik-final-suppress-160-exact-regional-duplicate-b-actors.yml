@@ -1,0 +1,112 @@
+name: SKARVIK - reversibly hide 160 exact duplicated regional asphalt actors
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-final-suppress-160-exact-regional-duplicate-b-actors.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  reversible-native-duplicate-suppression:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-final-native-exact-regional-second-batch-duplicate-report
+          run-id: 41316460511
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts/exact-original-regional-duplicates
+      - name: Verify exact 160 same-route original overlap list, staging and previous native assets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $mark=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path $mark) -or (Get-Content $mark -Raw).Trim() -ne '41188816555'){throw 'Wrong native stage'}
+          foreach($f in @(
+             'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+             (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'),
+             (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+             (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap'),
+             (Join-Path $root 'Content\Map\Big_City_LVL.umap'))){
+            if(!(Test-Path $f)){throw "Missing protected original native map: $f"}
+          }
+          if(Test-Path (Join-Path $root 'Saved\SkarvikCity\FinalRegionalNearDuplicateSuppression_20261101\restore-hidden-SK-RX-003-B-actors.json')){
+            throw 'Exact native duplicate suppression has already been attempted. Inspect existing restore plan.'
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Concurrent native Unreal process active'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          if($free -lt 12){throw 'Insufficient stage disk space for recovery backup'}
+          $proof=Join-Path $env:GITHUB_WORKSPACE 'receipts\exact-original-regional-duplicates\skarvik-final-regional-exact-second-batch-duplicate-actors.json'
+          if(!(Test-Path $proof)){throw 'Actual independent native overlapping road audit missing'}
+          $audit=Get-Content $proof -Raw|ConvertFrom-Json
+          if($audit.state -ne 'EXACT_SAME_ROUTE_REGIONAL_DUPLICATE_SECOND_BATCH_SURVEY_ONLY' -or
+             $audit.exactSameRouteXYNearDuplicateCount -ne 160 -or
+             $audit.routeCounts.'SK-RX-003' -ne 160){throw 'Unverified exact 160 same-route physical actor labels'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          foreach($script in @(
+             'unreal\Scripts\suppress_skarvik_final_exact_duplicate_regional_b_actors.py',
+             'unreal\Scripts\verify_skarvik_final_suppressed_regional_b_duplicates.py')){
+             & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE $script)
+             if($LASTEXITCODE -ne 0){throw "Native duplicate suppression source syntax invalid: $script"}
+          }
+          Write-Host 'SKARVIK_FINAL_EXACT160_REGIONAL_ROAD_SUPPRESSION_PRECHECK_OK=true'
+      - name: Preserve actual mesh actors but remove duplicate visibility and collision reversibly
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_EXACT_DUPLICATE_REGIONAL_AUDIT=Join-Path $env:GITHUB_WORKSPACE 'receipts\exact-original-regional-duplicates\skarvik-final-regional-exact-second-batch-duplicate-actors.json'
+          $env:SKARVIK_DUPLICATE_REGIONAL_SUPPRESSION_RESULT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-exact-regional-duplicate-suppression-build.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\suppress_skarvik_final_exact_duplicate_regional_b_actors.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path $env:SKARVIK_DUPLICATE_REGIONAL_SUPPRESSION_RESULT)){throw 'Native duplicate suppression receipt missing'}
+          $r=Get-Content $env:SKARVIK_DUPLICATE_REGIONAL_SUPPRESSION_RESULT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_FINAL_DUPLICATE_NATIVE_SUPPRESSION_STATE='+$r.state)
+          Write-Host ('SKARVIK_FINAL_DUPLICATE_B_ACTORS_HIDDEN='+$r.BActorsSafelyHidden)
+          Write-Host ('SKARVIK_FINAL_DUPLICATE_B_ACTORS_NO_COLLISION='+$r.BActorsWithCollisionDisabled)
+          if($r.state -ne 'FINAL_SKARVIK_160_EXACT_SK_RX_003_DUPLICATE_ASPHALT_ACTORS_REVERSIBLY_HIDDEN'){
+            throw ('Exact native road duplicates were not safely hidden: '+$r.error)
+          }
+          if($code -ne 0){Write-Host ('SKARVIK_NATIVE_DUPLICATE_EDITOR_AFTER_SAVE_NONZERO='+$code)}
+          Write-Host 'SKARVIK_FINAL_DUPLICATE_NATIVE_ROAD_ACTORS_RETAINED_AND_RECOVERABLE=true'
+      - name: Independently reload all saved regional duplicates and prove original road assets are untouched
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_DUPLICATE_SUPPRESSION_BUILD_RESULT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-exact-regional-duplicate-suppression-build.json'
+          $env:SKARVIK_DUPLICATE_SUPPRESSION_REOPEN_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-exact-regional-duplicate-suppression-reopen.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_final_suppressed_regional_b_duplicates.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path $env:SKARVIK_DUPLICATE_SUPPRESSION_REOPEN_REPORT)){throw 'Independent World Partition actor re-open proof missing'}
+          $r=Get-Content $env:SKARVIK_DUPLICATE_SUPPRESSION_REOPEN_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_FINAL_DUPLICATE_REOPEN_STATE='+$r.state)
+          Write-Host ('SKARVIK_FINAL_DUPLICATE_ACTORS_HIDDEN_AND_COLLISION_DISABLED='+$r.exactDuplicateBActorsHiddenAndCollisionOff)
+          if($r.state -ne 'FINAL_SKARVIK_160_DUPLICATE_REGIONAL_B_ACTORS_HIDDEN_NO_COLLISION_AND_RESTORABLE_AFTER_REOPEN'){
+            throw ('Native duplicate B road actors still overlap after reopen: '+$r.error)
+          }
+          if($code -ne 0){Write-Host ('SKARVIK_NATIVE_REOPEN_AFTER_SAVE_NONZERO='+$code)}
+          Write-Host 'SKARVIK_FINAL_160_DUPLICATE_REGIONAL_ROAD_ACTORS_REVERSIBLY_SUPPRESSED_VERIFIED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-final-160-regional-duplicate-road-meshes-suppressed-and-reopened
+          path: |
+            skarvik-final-exact-regional-duplicate-suppression-build.json
+            skarvik-final-exact-regional-duplicate-suppression-reopen.json
+          if-no-files-found: warn

@@ -1,0 +1,82 @@
+name: SKARVIK - stage native original houses and civic buildings for 125 sites
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-stage-original-house-meshes.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  stage-houses:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    steps:
+      - name: Copy and hash-verify only authentic owned house model assets to C
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $source='D:\ANOMALIA\unreal\Content'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $destination=Join-Path $root 'Content'
+          $paths=@(
+           'Anomalia\Buildings\Lot1',
+           'Anomalia\Buildings\Expansion1',
+           'Anomalia\InteractiveRealismReview_v1\wood_house_enterable'
+          )
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Untrusted stage'}
+          if(!(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'))){throw 'SKARVIK stage missing'}
+          if(!(Test-Path -LiteralPath (Join-Path $source 'Maps\ANOMALIA_Archipelago_v2.umap'))){throw 'Original map missing'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Other UE instance active'}
+          foreach($name in @('Crowd','Vehicle')){if(Test-Path -LiteralPath (Join-Path $destination $name)){throw 'Forbidden bulk folder exists'}}
+          [long]$total=0;$catalog=@()
+          foreach($p in $paths){
+            $from=Join-Path $source $p;$to=Join-Path $destination $p
+            if(!(Test-Path -LiteralPath $from -PathType Container)){throw "Required original house assets not found: $p"}
+            [long]$bytes=0;$count=0
+            foreach($f in (Get-ChildItem -LiteralPath $from -Recurse -File -Force -ErrorAction Stop)){$bytes+=[long]$f.Length;$count++}
+            $total+=$bytes
+            $catalog+=@([pscustomobject]@{relative=$p;sourceFiles=$count;sourceBytes=$bytes;targetExists=(Test-Path -LiteralPath $to)})
+            Write-Host ("SKARVIK_REAL_HOUSE_SOURCE path={0} files={1} GiB={2:N4}" -f $p,$count,($bytes/1GB))
+          }
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace
+          Write-Host ("SKARVIK_REAL_HOUSE_FREE_BEFORE_GIB={0:N2}" -f ($free/1GB))
+          if($total -gt 3GB){throw 'Selected house payload exceeds 3GiB guard'}
+          if(($free-$total) -lt 18GB){throw 'Copy would reduce C below 18GiB safety headroom'}
+          $results=@()
+          foreach($entry in $catalog){
+            $from=Join-Path $source $entry.relative;$to=Join-Path $destination $entry.relative
+            if(!(Test-Path -LiteralPath $to -PathType Container)){
+              New-Item -ItemType Directory -Path $to -Force|Out-Null
+              & robocopy.exe $from $to /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /NP /NFL /NDL /NJH /NJS
+              $code=$LASTEXITCODE
+              if($code -ge 8){throw "Robocopy failed for $($entry.relative), exit=$code"}
+            }
+            $verified=0;[long]$written=0
+            foreach($file in (Get-ChildItem -LiteralPath $from -File -Recurse -Force -ErrorAction Stop)){
+              $rel=$file.FullName.Substring($from.Length).TrimStart([char]'\')
+              $target=Join-Path $to $rel
+              if(!(Test-Path -LiteralPath $target -PathType Leaf)){throw "Target missing: $rel"}
+              if($file.Length -ne (Get-Item -LiteralPath $target).Length){throw "Size mismatch: $rel"}
+              if((Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash){throw "Hash mismatch: $rel"}
+              $verified++;$written+=[long]$file.Length
+            }
+            Write-Host ("SKARVIK_REAL_HOUSE_COPY_VERIFIED={0} count={1} bytes={2}" -f $entry.relative,$verified,$written)
+            $results+=@([ordered]@{path=$entry.relative;verifiedFiles=$verified;bytes=$written})
+          }
+          $after=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          if($after -lt 18){throw 'Disk reserve after stage below 18GiB'}
+          $report=[ordered]@{state='SOURCE_HOUSES_STAGED_3D_CONSTRUCTION_NOT_DONE';folders=$results;freeCGiB=[math]::Round($after,2);originalDModified=$false;citySampleCrowdImported=$false;citySampleVehiclesImported=$false;cityBuildVerified=$false}
+          $out=Join-Path $env:GITHUB_WORKSPACE 'skarvik-real-houses-staged.json'
+          [IO.File]::WriteAllText($out,($report|ConvertTo-Json -Depth 8),(New-Object System.Text.UTF8Encoding($false)))
+          Write-Host 'SKARVIK_REAL_HOUSE_ASSETS_HASH_VERIFIED=true'
+          Write-Host 'SKARVIK_NATIVE_HOUSES_NOT_YET_PLACED=true'
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-native-original-house-assets-proof
+          path: skarvik-real-houses-staged.json
+          if-no-files-found: warn

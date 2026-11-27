@@ -1,0 +1,94 @@
+name: SKARVIK - complete City Sample plugin dependencies and UE5.8 native compile
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-citysample-plugin-graph-compile.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  resolve-full-citysample-plugin-graph:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 110
+    steps:
+      - name: Confirm original untouched, staged world and disk safety
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $source='D:\ANOMALIA\FabImports\CitySample'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if(!(Test-Path -LiteralPath (Join-Path $stage '.skarvik-ci-stage-marker'))){throw 'Stage marker missing'}
+          if((Get-Content -LiteralPath (Join-Path $stage '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Stage mismatch'}
+          if(!(Test-Path -LiteralPath 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject')){throw 'Original D project missing'}
+          if(!(Test-Path -LiteralPath (Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'))){throw 'SKARVIK 48km stage missing'}
+          foreach($dir in @('Crowd','Vehicle')){
+            if(Test-Path -LiteralPath (Join-Path $stage ('Content\'+$dir))){throw ('Forbidden bulk data: '+$dir)}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal currently active'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ("SKARVIK_PLUGIN_GRAPH_FREE_C_GIB={0:N2}" -f $free)
+          if($free -lt 22){throw 'C free space below safe threshold'}
+          if(!(Test-Path -LiteralPath (Join-Path $source 'Plugins') -PathType Container)){throw 'Original CitySample source Plugins directory missing'}
+      - name: Stage all missing small City Sample plugins, not Crowd/Vehicle Content
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $original='D:\ANOMALIA\FabImports\CitySample\Plugins'
+          $dest='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Plugins'
+          New-Item -ItemType Directory -Path $dest -Force | Out-Null
+          foreach($plugin in (Get-ChildItem -LiteralPath $original -Directory -ErrorAction Stop)){
+            $from=$plugin.FullName
+            $to=Join-Path $dest $plugin.Name
+            if(Test-Path -LiteralPath $to){Write-Host "SKARVIK_PLUGIN_GRAPH_ALREADY_STAGED=$($plugin.Name)";continue}
+            Copy-Item -LiteralPath $from -Destination $to -Recurse
+            Write-Host "SKARVIK_PLUGIN_GRAPH_COPIED=$($plugin.Name)"
+          }
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if(Test-Path -LiteralPath (Join-Path $root 'Content\Crowd')){throw 'Excluded crowd data unexpectedly present'}
+          if(Test-Path -LiteralPath (Join-Path $root 'Content\Vehicle')){throw 'Excluded vehicle data unexpectedly present'}
+          Write-Host 'SKARVIK_SOURCE_PLUGIN_GRAPH_STAGED_WITHOUT_BULK_CROWD_VEHICLES=true'
+      - name: Enable missing City Sample native classes in isolated project descriptor
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $project=Join-Path $stage 'AnomaliaZPrigimalia.uproject'
+          $backup=Join-Path $stage 'Saved\SkarvikCity\AnomaliaZPrigimalia.uproject.pre-native-citymodules'
+          if(!(Test-Path -LiteralPath $backup)){throw 'Backup of valid original stage descriptor missing'}
+          $data=Get-Content -LiteralPath $project -Raw|ConvertFrom-Json
+          foreach($name in @('CitySample','CitySampleAnimGraphRuntime')){
+            if(@($data.Modules|Where-Object{$_.Name -eq $name}).Count){throw "Module $name already enabled, refuse duplicate"}
+            $data.Modules=@($data.Modules)+@([pscustomobject]@{Name=$name;Type='Runtime';LoadingPhase='Default'})
+          }
+          foreach($name in @('RuleProcessor','Crossfader','Traffic','CitySampleMassCrowd','HoverDrone','WorldAudioDataSystem','Soundscape','MassGameplay','MassAI','MassCrowd','StateTree','ZoneGraph','MotionWarping','ContextualAnimation','AnimToTexture','HairStrands','ModularGameplay','OnlineSubsystem','NetworkPrediction')){
+            if(!@($data.Plugins|Where-Object{$_.Name -eq $name}).Count){
+              $data.Plugins=@($data.Plugins)+@([pscustomobject]@{Name=$name;Enabled=$true})
+            }
+          }
+          [IO.File]::WriteAllText($project,($data|ConvertTo-Json -Depth 32),(New-Object System.Text.UTF8Encoding($false)))
+          Write-Host 'SKARVIK_CITYSAMPLE_NATIVE_ACTOR_MODULES_ENABLED=true'
+      - name: Compile native City Sample source and plugin graph under UE 5.8
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\AnomaliaZPrigimalia.uproject'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          & $build AnomaliaZPrigimaliaEditor Win64 Development $project -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
+          $result=$LASTEXITCODE
+          if($result -ne 0){throw "Native C++ compile still blocked exit=$result. See above source compatibility errors."}
+          Write-Host 'SKARVIK_CITYSAMPLE_NATIVE_GEOMETRY_CLASSES_COMPILATION_PASSED=true'
+          Write-Host 'SKARVIK_BIG_CITY_LINKED_IN_MAP_NOT_YET_VERIFIED=true'
+      - name: Restore original staged project descriptor if compilation fails
+        if: failure()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $backup=Join-Path $stage 'Saved\SkarvikCity\AnomaliaZPrigimalia.uproject.pre-native-citymodules'
+          if(Test-Path -LiteralPath $backup){
+            Copy-Item -LiteralPath $backup -Destination (Join-Path $stage 'AnomaliaZPrigimalia.uproject') -Force
+            Write-Host 'SKARVIK_SAFE_STAGE_DESCRIPTOR_ROLLBACK_COMPLETED=true'
+          }
+          Write-Host 'SKARVIK_D_SOURCE_AND_ORIGINAL_WORLD_PRESERVED=true'

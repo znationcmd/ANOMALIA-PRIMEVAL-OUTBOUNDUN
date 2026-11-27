@@ -27,7 +27,7 @@ class RuntimeDataTests(unittest.TestCase):
             server.write_text('user configuration remains untouched')
             self.assertEqual(module.stage(root), 5)
             self.assertEqual(module.stage(root), 5)
-            staged = root / 'unreal/Content/Anomalia/Data/loot_items_catalog.json'
+            staged = root / 'unreal/Content/AnomaliaZPrigimalia/Data/loot_items_catalog.json'
             self.assertEqual(len(json.loads(staged.read_text())['items']), 236)
             self.assertEqual(server.read_text(), 'user configuration remains untouched')
             self.assertEqual(staged.read_bytes(), (root / 'public/config/loot_items_catalog.json').read_bytes())
@@ -42,7 +42,7 @@ class RuntimeDataTests(unittest.TestCase):
             doc['description'] = 'updated owned default'
             source.write_text(json.dumps(doc))
             module.stage(root)
-            staged = root / 'unreal/Content/Anomalia/Data/loot_spawns.json'
+            staged = root / 'unreal/Content/AnomaliaZPrigimalia/Data/loot_spawns.json'
             self.assertEqual(staged.read_bytes(), source.read_bytes())
             staged.write_text('a manual local edit')
             with self.assertRaisesRegex(ValueError, 'Preserving edited or unowned'):
@@ -54,7 +54,7 @@ class RuntimeDataTests(unittest.TestCase):
             root = Path(directory)
             self.fixture(root)
             module.stage(root)
-            staged = root / 'unreal/Content/Anomalia/Data/loot_items_catalog.json'
+            staged = root / 'unreal/Content/AnomaliaZPrigimalia/Data/loot_items_catalog.json'
             before = staged.read_bytes()
             source = root / 'public/config/loot_items_catalog.json'
             source.write_text(source.read_text()+'\n')
@@ -62,6 +62,18 @@ class RuntimeDataTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 module.stage(root)
             self.assertEqual(staged.read_bytes(), before)
+
+    def test_stage_repo_catalogues_into_separate_existing_unreal_project(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.fixture(root)
+            project = root / 'separate-project'
+            project.mkdir()
+            (project / 'AnomaliaZPrigimalia.uproject').write_text('{}')
+            self.assertEqual(module.stage(root, project_dir=project), 5)
+            staged = project / 'Content/AnomaliaZPrigimalia/Data/loot_items_catalog.json'
+            self.assertEqual(len(json.loads(staged.read_text())['items']), 236)
+            self.assertTrue((project / 'Content/AnomaliaZPrigimalia/Data/stage-manifest.json').is_file())
 
 
 if __name__ == '__main__':

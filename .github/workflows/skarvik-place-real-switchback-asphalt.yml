@@ -1,0 +1,84 @@
+name: SKARVIK - physically pave grade-safe road switchbacks from approved native survey
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-place-real-switchback-asphalt.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  real-asphalt-switchbacks:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-grade-safe-road-switchback-proposed-alignments
+          run-id: 41246316055
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: ${{ github.workspace }}
+      - name: Confirm native source survey and protected WP stage before placing road
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Invalid stage marker'}
+          foreach($p in @('D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\VisibleBigCitySampleCoreV1\graded-before-visible-city.umap'))){
+            if(!(Test-Path -LiteralPath $p)){throw "Required previously saved world absent: $p"}
+          }
+          if(Test-Path (Join-Path $root 'Saved\SkarvikCity\SwitchbackNativeAsphaltV1_20261031\graded-before-switchback.umap')){
+            throw 'Switchback native authoring already attempted; do not repeat'
+          }
+          $survey=Join-Path $env:GITHUB_WORKSPACE 'skarvik-switchbacks-road-gap-survey.json'
+          if(!(Test-Path -LiteralPath $survey)){throw 'Missing cross-run native survey artifact'}
+          $d=Get-Content -LiteralPath $survey -Raw|ConvertFrom-Json
+          if($d.state -ne 'SKARVIK_GRADE_SAFE_ROAD_SWITCHBACKS_SURVEYED_WITHOUT_MODIFYING_TERRAIN' -or $d.proposedDetours -ne 7){
+            throw 'Native survey contains no trusted approved terrain analysis'
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Other UE editor active'}
+          if(([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB -lt 18){throw 'Insufficient isolated stage disk reserve'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_real_switchback_asphalt_from_survey.py')
+          if($LASTEXITCODE -ne 0){throw 'Native switchback source syntax invalid'}
+          Write-Host 'SKARVIK_NATIVE_SWITCHBACK_PROPOSAL_SOURCE_VERIFIED=true'
+      - name: Install genuine CitySample asphalt meshes only for physically grade-approved 5m switchback segments
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_REAL_SWITCHBACK_APPROVED_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-switchbacks-road-gap-survey.json'
+          $env:SKARVIK_REAL_SWITCHBACK_NATIVE_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-real-native-switchback-road-actors.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_real_switchback_asphalt_from_survey.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_REAL_SWITCHBACK_NATIVE_REPORT)){throw 'Missing native switchback road output'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_REAL_SWITCHBACK_NATIVE_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_REAL_SWITCHBACK_NATIVE_STATE='+$r.state)
+          Write-Host ('SKARVIK_REAL_SWITCHBACK_ROAD_GROUPS='+$r.newRealSwitchbackGroups)
+          Write-Host ('SKARVIK_REAL_SWITCHBACK_STATIC_MESH_ACTORS='+$r.nativeActorCount)
+          Write-Host ('SKARVIK_REAL_SWITCHBACK_ASPHALT_METRES='+$r.nativeAsphaltMetres)
+          Write-Host ('SKARVIK_REAL_SWITCHBACK_UNRESOLVED_GROUPS='+$r.unresolvedTerrainGroups)
+          if($exit -ne 0 -or $r.state -ne 'REAL_TERRAIN_SAFE_SWITCHBACK_ASPHALT_ADDED_NOT_YET_DRIVE_TESTED'){
+            throw ('Native asphalt switchback authoring failed: '+$r.error)
+          }
+          Write-Host 'SKARVIK_REAL_SWITCHBACK_ROAD_ACTORS_SAVED_AS_NATIVE_WP=true'
+          Write-Host 'SKARVIK_TOTAL_ROAD_NETWORK_NOT_YET_FULLY_CONTINUOUS_OR_SM5_DRIVEN=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-real-ue5-switchback-grade-and-road-surface-proof
+          path: skarvik-real-native-switchback-road-actors.json
+          if-no-files-found: warn

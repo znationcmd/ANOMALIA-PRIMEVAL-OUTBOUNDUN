@@ -1,0 +1,28 @@
+name: SKARVIK - read-only Windows volume headroom
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-volumes-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  check-volumes:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Report available local disk space ONLY
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          foreach($d in @([System.IO.DriveInfo]::GetDrives())){
+            if($d.IsReady -and ($d.DriveType -eq 'Fixed' -or $d.DriveType -eq 'Removable')){
+              $free=[math]::Round($d.AvailableFreeSpace/1GB,1)
+              $total=[math]::Round($d.TotalSize/1GB,1)
+              Write-Host "SKARVIK_STORAGE_VOLUME=$($d.Name) TYPE=$($d.DriveType) FREE_GB=$free TOTAL_GB=$total"
+            }
+          }
+          Write-Host "READ_ONLY_CHECK_COMPLETE=true"

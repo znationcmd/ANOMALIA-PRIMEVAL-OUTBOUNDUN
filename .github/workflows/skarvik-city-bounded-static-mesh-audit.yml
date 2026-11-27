@@ -1,0 +1,62 @@
+name: SKARVIK - bounded native Big City source buildings and sidewalks audit
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-city-bounded-static-mesh-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  city-mesh-sample:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Protect D original and C graded map, do not modify any source content
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if((Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Wrong isolated stage marker'}
+          foreach($f in @('D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'))){
+            if(!(Test-Path -LiteralPath $f)){throw "Protected source missing: $f"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Other UE process active'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_citysample_core_bounded_meshes.py')
+          if($LASTEXITCODE -ne 0){throw 'Source Python audit invalid'}
+          Write-Host 'SKARVIK_CITYSOURCE_BOUNDED_AUDIT_NO_MUTATION_PREFLIGHT_OK=true'
+      - name: Load at most 18 genuine native City Sample source actors and examine real static building meshes read-only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_CITY_BOUNDED_MESH_AUDIT_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-city-core-real-actor-mesh-audit.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_citysample_core_bounded_meshes.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path $env:SKARVIK_CITY_BOUNDED_MESH_AUDIT_REPORT)){throw "City sample metadata audit missing (UE exit $code)"}
+          $d=Get-Content -LiteralPath $env:SKARVIK_CITY_BOUNDED_MESH_AUDIT_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_CITY_BOUNDED_MESH_STATE='+$d.state)
+          Write-Host ('SKARVIK_CITY_BOUNDED_SOURCE_ACTORS_SELECTED='+$d.selectedActorCount)
+          Write-Host ('SKARVIK_CITY_BOUNDED_REAL_STATIC_MESH_COMPONENTS='+$d.sampledNativeStaticMeshComponents)
+          if($code -ne 0 -or $d.state -ne 'BIG_CITY_NATIVE_STATIC_MESH_COMPONENTS_DISCOVERED_FROM_SMALL_BOUNDED_SOURCE_SAMPLE'){
+             throw ('City sample bounded actor inspection failed: '+$d.error)
+          }
+          Write-Host 'SKARVIK_BIG_CITY_REAL_NATIVE_MESH_SAMPLE_FOUND_NO_COPY_OR_FULL_STREAM=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-bigcity-bounded-18-source-actors-real-meshes
+          path: skarvik-city-core-real-actor-mesh-audit.json
+          if-no-files-found: warn

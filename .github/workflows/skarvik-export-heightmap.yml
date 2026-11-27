@@ -1,0 +1,52 @@
+name: SKARVIK 48km - export real UE5 landscape heightmap R16
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths:
+      - 'scripts/ue5/export-skarvik-r16.cpp'
+      - 'unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaSkarvikTerrain.h'
+      - '.github/workflows/skarvik-export-heightmap.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  export-heightmap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate and verify full resolution R16
+        run: |
+          mkdir -p heightmaps
+          g++ -std=c++17 -O3 -Wall -Wextra -Werror -pedantic \
+            -I unreal/Source/AnomaliaZPrigimalia \
+            scripts/ue5/export-skarvik-r16.cpp -o /tmp/export-skarvik-r16
+          /tmp/export-skarvik-r16 heightmaps/SKARVIK_48x48km_3025x3025.r16
+          test "$(stat -c%s heightmaps/SKARVIK_48x48km_3025x3025.r16)" -eq 18301250
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          metadata={
+            "world":"SKARVIK",
+            "sideMeters":48000,
+            "heightSamples":3025,
+            "format":"RAW_UNSIGNED_16_BIT_LITTLE_ENDIAN",
+            "unrealLandscapeScaleXcm":4800000/3024,
+            "unrealLandscapeScaleYcm":4800000/3024,
+            "unrealLandscapeScaleZ":800,
+            "zeroMetresHeightSample":32768,
+            "citySampleIncluded":False,
+            "terrainInUnrealCreated":False,
+            "buildingMeshesIncluded":False,
+            "citySampleCenterEastNorthMeters":[2000,-8000],
+            "note":"Landscape heightmap only; import into verified UE5.8 staged project, retain original 48km SKARVIK"
+          }
+          Path("heightmaps/SKARVIK_heightmap_metadata.json").write_text(json.dumps(metadata,indent=2))
+          assert Path("heightmaps/SKARVIK_48x48km_3025x3025.r16").stat().st_size == 3025*3025*2
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: skarvik-48km-real-ue5-r16-heightmap
+          path: heightmaps/
+          if-no-files-found: error
+          retention-days: 30

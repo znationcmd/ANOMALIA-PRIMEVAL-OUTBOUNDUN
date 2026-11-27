@@ -1,0 +1,62 @@
+name: SKARVIK - verify actual Big City native UWorld pointer after World Partition reopen
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-verify-bigcity-source-world-pointer.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-pointer:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Protect Big City source and all existing C staging assets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong native stage'}
+          foreach($path in @('D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'))){
+            if(!(Test-Path -LiteralPath $path)){throw "Missing original or staged world $path"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal editor active'}
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_bigcity_native_world_pointer.py')
+          if($LASTEXITCODE -ne 0){throw 'City pointer audit source syntax failed'}
+          Write-Host 'SKARVIK_BIGCITY_SINGLE_ACTOR_POINTER_READONLY_PREFLIGHT_OK=true'
+      - name: Selectively load only native Big City LevelInstance actor, inspect source UWorld pointer without saving
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_bigcity_native_world_pointer.py'
+          $env:SKARVIK_NATIVE_CITY_POINTER_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-bigcity-single-actor-pointer-proof.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $rc=$LASTEXITCODE
+          if(!(Test-Path $env:SKARVIK_NATIVE_CITY_POINTER_REPORT)){throw 'No Big City source UWorld pointer report'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_NATIVE_CITY_POINTER_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_BIGCITY_NATIVE_POINTER_PROOF_STATE='+$r.state)
+          Write-Host ('SKARVIK_BIGCITY_ACTUAL_ACTOR_UCLASS='+$r.actorUClass)
+          Write-Host ('SKARVIK_BIGCITY_PERSISTED_SOURCE_PATH='+$r.actorWorldAssetPath)
+          Write-Host ('SKARVIK_BIGCITY_FULL_NESTED_LEVEL_IS_LOADED='+$r.IsBigCityNestedLevelActuallyLoaded)
+          if($rc -ne 0 -or $r.state -ne 'BIG_CITY_NATIVE_LEVELINSTANCE_UWORLD_POINTER_PERSISTED_NOT_VISUALLY_STREAMED'){
+            throw ('Big City source pointer cannot be proven: '+$r.error)
+          }
+          Write-Host 'SKARVIK_BIGCITY_SOURCE_UWORLD_POINTER_CONFIRMED_NOT_FULL_CITY_STREAMED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-big-city-source-UWorld-single-actor-persistence
+          path: skarvik-bigcity-single-actor-pointer-proof.json
+          if-no-files-found: warn

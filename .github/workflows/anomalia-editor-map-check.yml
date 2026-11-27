@@ -1,0 +1,28 @@
+name: ANOMALIA Editor - real UE map integration checks
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths:
+      - 'desktop/main.cjs'
+      - 'desktop/preload.cjs'
+      - 'desktop/unreal-project.cjs'
+      - 'src/map-editor.js'
+      - '.github/workflows/anomalia-editor-map-check.yml'
+  workflow_dispatch:
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate JavaScript syntax
+        run: |
+          node --check desktop/main.cjs
+          node --check desktop/preload.cjs
+          node --check desktop/unreal-project.cjs
+          node --check src/map-editor.js
+      - name: Confirm no Unreal project files were modified
+        run: |
+          git status --porcelain

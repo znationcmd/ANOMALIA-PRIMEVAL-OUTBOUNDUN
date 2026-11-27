@@ -1,0 +1,66 @@
+name: SKARVIK - read-only audit of the complete main map
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-main-map-readonly-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  audit-main-map:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Inventory the actual D drive project and all SKARVIK map packages without editing anything
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='D:\ANOMALIA\unreal'
+          $content=Join-Path $project 'Content'
+          $out=Join-Path $env:GITHUB_WORKSPACE 'skarvik-main-map-audit.json'
+          if(!(Test-Path -LiteralPath $project -PathType Container)){throw "Main project not found: $project"}
+          if(!(Test-Path -LiteralPath $content -PathType Container)){throw "Main Content folder not found: $content"}
+          $uproject=@(Get-ChildItem -LiteralPath $project -File -Filter '*.uproject' | Select-Object -First 5 | ForEach-Object {$_.Name})
+          $maps=@(Get-ChildItem -LiteralPath $content -Recurse -File -Filter '*.umap' -ErrorAction Stop | ForEach-Object {
+            [pscustomobject]@{name=$_.Name;relativePath=$_.FullName.Substring($content.Length+1);bytes=$_.Length;lastWriteUtc=$_.LastWriteTimeUtc.ToString('o');sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}
+          })
+          $skarvik=@($maps | Where-Object {$_.name -match 'SKARVIK|SKARV|ARCHIPELAGO|BIG_CITY|CITY'})
+          $assetExt=@('.uasset','.umap')
+          $assetFiles=@(Get-ChildItem -LiteralPath $content -Recurse -File -ErrorAction Stop | Where-Object {$assetExt -contains $_.Extension.ToLowerInvariant()})
+          $topFolders=@(Get-ChildItem -LiteralPath $content -Directory | ForEach-Object {
+            $n=$_.Name
+            $count=@(Get-ChildItem -LiteralPath $_.FullName -Recurse -File -ErrorAction SilentlyContinue | Where-Object {$assetExt -contains $_.Extension.ToLowerInvariant()}).Count
+            [pscustomobject]@{name=$n;assetPackageCount=$count}
+          })
+          $result=[pscustomobject]@{
+            state='SKARVIK_MAIN_D_DRIVE_READ_ONLY_PACKAGE_AUDIT'
+            readOnly=$true
+            projectRoot=$project
+            projectFiles=$uproject
+            totalUmapCount=$maps.Count
+            totalUassetAndUmapCount=$assetFiles.Count
+            allMapPackages=$maps
+            skarvikRelatedMapPackages=$skarvik
+            contentTopLevelPackageCounts=$topFolders
+            note='Package inventory, timestamps and hashes only. Does not inspect in-level actor composition, does not edit maps, assets, saves or source files, and does not claim PIE validation.'
+          }
+          $result | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $out -Encoding UTF8
+          Write-Host "MAIN_PROJECT=$project"
+          Write-Host "UPROJECT_FILES=$($uproject.Count)"
+          Write-Host "TOTAL_UMAP=$($maps.Count)"
+          Write-Host "SKARVIK_RELATED_UMAP=$($skarvik.Count)"
+          Write-Host "TOTAL_ASSET_PACKAGES=$($assetFiles.Count)"
+          Write-Host 'SKARVIK_MAIN_MAP_READ_ONLY_AUDIT_COMPLETE=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-main-map-readonly-audit
+          path: skarvik-main-map-audit.json
+          if-no-files-found: warn

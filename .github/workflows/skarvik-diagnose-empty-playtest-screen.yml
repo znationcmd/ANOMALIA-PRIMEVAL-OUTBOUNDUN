@@ -1,0 +1,94 @@
+name: SKARVIK - diagnose blue/empty native gameplay viewport from runtime logs
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-diagnose-empty-playtest-screen.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  read-only-game-viewport-diagnostic:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Inspect existing UE5 game log, World Partition stage files and active processes without launching UE
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Wrong stage marker: refuse to inspect'}
+          $map=Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'
+          $external=Join-Path $stage 'Content\__ExternalActors__\Maps\PRIGIMALIA_SKARVIK_FINAL_v1'
+          $logs=Join-Path $stage 'Saved\Logs'
+          $processes=@(Get-CimInstance Win32_Process | Where-Object { $_.Name -in @('UnrealEditor.exe','UnrealEditor-Cmd.exe','AnomaliaZPrigimalia.exe') } | ForEach-Object {
+            [ordered]@{
+              name=$_.Name
+              pid=$_.ProcessId
+              isGame=([string]$_.CommandLine -match '(?i)(?:^|\s)-game(?:\s|$)')
+              usesFinalMap=([string]$_.CommandLine -match 'PRIGIMALIA_SKARVIK_FINAL_v1')
+              usesTrustedProject=([string]$_.CommandLine -match 'ANOMALIAZ_SKARVIK_STAGE_41188816555')
+              commandFlags=$(if($_.CommandLine -match '(?i)-game'){'game'}else{'editor'})
+            }
+          })
+          $logList=@()
+          if(Test-Path -LiteralPath $logs){
+            $logList=@(Get-ChildItem -LiteralPath $logs -File -ErrorAction SilentlyContinue |
+              Where-Object { $_.Extension -in @('.log','.txt') } |
+              Sort-Object LastWriteTimeUtc -Descending |
+              Select-Object -First 4)
+          }
+          $logSamples=@()
+          foreach($file in $logList){
+            $matches=@()
+            try{
+              $lines=@(Get-Content -LiteralPath $file.FullName -Tail 4500 -ErrorAction Stop)
+              $matches=@($lines | Where-Object {
+                $_ -match '(?i)WorldPartition|PlayerStart|SpawnActor|LogGameMode|GetPlayerStart|MapName|Landscape|LogStreaming|Failed to load|Fatal error|\berror\b|LogWindows: Error|Failed to find|Failed to create|Assertion failed|SessionWidget|shader|Preparing Texture|MeshDistance'
+              } | Select-Object -Last 95 | ForEach-Object {
+                $_ -replace 'C:[/\\]Users[/\\][^/\\ ]+[/\\]','C:/Users/<redacted>/'
+              })
+            }catch{$matches=@('unreadable-locked-log')}
+            $logSamples+=([ordered]@{
+              name=$file.Name
+              lastWriteUtc=$file.LastWriteTimeUtc.ToString('o')
+              bytes=$file.Length
+              relevantTailLines=$matches
+            })
+          }
+          $report=[ordered]@{
+            state='READ_ONLY_LIVE_PLAYTEST_VIEWPORT_DIAGNOSIS'
+            capturedUtc=[DateTime]::UtcNow.ToString('o')
+            finalMapExists=(Test-Path $map)
+            finalMapBytes=$(if(Test-Path $map){(Get-Item -LiteralPath $map).Length}else{0})
+            finalMapExternalActorsDirectoryExists=(Test-Path $external)
+            activeNativeProcesses=$processes
+            relevantLogs=$logSamples
+            killedProcess=$false
+            modifiedOriginalAssets=$false
+            changedPlayerSave=$false
+            launchedAnotherUnrealInstance=$false
+          }
+          $out=Join-Path $env:GITHUB_WORKSPACE 'skarvik-live-empty-viewport-diagnosis.json'
+          ($report|ConvertTo-Json -Depth 9)|Set-Content -LiteralPath $out -Encoding utf8
+          Write-Host ('SKARVIK_LIVE_RUNNING_GAME_COUNT='+@($processes|Where-Object { $_['isGame'] -and $_['usesFinalMap'] }).Count)
+          Write-Host ('SKARVIK_FINAL_NATIVE_MAP_EXISTS='+$report.finalMapExists)
+          Write-Host ('SKARVIK_FINAL_NATIVE_EXTERNAL_ACTORS_PRESENT='+$report.finalMapExternalActorsDirectoryExists)
+          Write-Host ('SKARVIK_LIVE_FOUND_LOG_COUNT='+$logSamples.Count)
+          foreach($entry in $logSamples){
+            Write-Host ('SKARVIK_RUNTIME_LOG='+$entry.name+' '+$entry.lastWriteUtc)
+            foreach($line in @($entry.relevantTailLines | Select-Object -Last 28)){Write-Host ('SKARVIK_RUNTIME_LOG_LINE='+$line)}
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-live-empty-viewport-runtime-diagnostic
+          path: skarvik-live-empty-viewport-diagnosis.json
+          if-no-files-found: warn

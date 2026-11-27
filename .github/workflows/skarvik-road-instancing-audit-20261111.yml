@@ -1,0 +1,76 @@
+name: SKARVIK - 128m instanced road optimization safety QA
+on:
+  push:
+    branches:
+      - feature/skarvik-instanced-road-clusters-20261111
+    paths:
+      - 'unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaRoadCluster.*'
+      - 'unreal/Scripts/audit_skarvik_instanced_road_candidates_20261111.py'
+      - 'scripts/ue5/worldgen/plan_road_instancing.py'
+      - 'tests/test_road_instancing.py'
+      - '.github/workflows/skarvik-road-instancing-audit-20261111.yml'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaRoadCluster.*'
+      - 'unreal/Scripts/audit_skarvik_instanced_road_candidates_20261111.py'
+      - 'scripts/ue5/worldgen/plan_road_instancing.py'
+      - 'tests/test_road_instancing.py'
+      - '.github/workflows/skarvik-road-instancing-audit-20261111.yml'
+permissions:
+  contents: read
+jobs:
+  static-planner-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify deterministic 128m instancing with shared mesh, materials, collisions and Data Layers
+        run: |
+          python -m unittest discover -s tests -p 'test_road_instancing.py' -v
+          python -m py_compile scripts/ue5/worldgen/plan_road_instancing.py
+          python -m py_compile unreal/Scripts/audit_skarvik_instanced_road_candidates_20261111.py
+  native-ue5-readonly-survey:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    concurrency:
+      group: anomalia-ue5-native-host
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Inspect real SKARVIK World Partition descriptor groups without saving
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted stage'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal already running'}
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_instanced_road_candidates_20261111.py'
+          $env:SKARVIK_ROAD_INSTANCING_READONLY_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-road-instances-readonly-20261111.json'
+          & $editor $project "-ExecutePythonScript=$script" -nullrhi -unattended -nosplash -nosound -nopause
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_ROAD_INSTANCING_READONLY_REPORT)){throw "No native audit report"}
+          $r=Get-Content -LiteralPath $env:SKARVIK_ROAD_INSTANCING_READONLY_REPORT -Raw | ConvertFrom-Json
+          Write-Host ('SKARVIK_EXISTING_INDIVIDUAL_ROADS='+$r.sourceRouteActorCount)
+          Write-Host ('SKARVIK_ESTIMATED_COMPATIBLE_INSTANCED_GROUPS='+$r.hypotheticalClustersIfCompatible)
+          Write-Host ('SKARVIK_NATIVE_SOURCE_UNMODIFIED='+$r.sourceLevelMetadataUnchanged)
+          if($exit -ne 0 -or $r.state -ne 'NATIVE_ROAD_GROUPING_GEOGRAPHIC_AUDIT_ONLY'){
+            throw ('Read-only UE5 instancing survey failed: '+$r.error)
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: SKARVIK-REAL-ROAD-INSTANCE-COUNT-BEFORE-CONVERSION
+          path: skarvik-road-instances-readonly-20261111.json
+          retention-days: 30
+          if-no-files-found: warn

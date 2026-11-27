@@ -1,0 +1,81 @@
+name: SKARVIK - migrate original true 3D houses from both maps onto final seven-island coast
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-final-v1-migrate-authentic-towns-and-island-houses.yml', 'unreal/Scripts/migrate_skarvik_authentic_old_buildings_to_final_v1.py']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-source-actor-migration:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Confirm native final world exists and source graded and original islands remain untouched
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Not protected C stage'}
+          foreach($path in @(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'))){
+            if(!(Test-Path -LiteralPath $path)){throw "Required previously saved original or final world absent: $path"}
+          }
+          if(Test-Path -LiteralPath (Join-Path $root 'Saved\SkarvikCity\FinalV1AuthenticOriginalBuildingMigration_20261101\final-before-houses.umap')){
+            throw 'This native authentic 3D building migration was already attempted'
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval -ErrorAction SilentlyContinue).Count){
+            throw 'Concurrent native UE process active'
+          }
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ('SKARVIK_NATIVE_BUILDING_MIGRATION_FREE_C_GIB='+[math]::Round($free,2))
+          if($free -lt 12){throw 'Insufficient C disk reserve for 3D actor migration'}
+          $plan=Get-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-final-coastal-migration-125-sites.json') -Raw|ConvertFrom-Json
+          if(@($plan.sites).Count -ne 125 -or $plan.wetCentersRequiringRelocation -ne 67){throw 'Untrusted 125-town original-coast relocation manifest'}
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\migrate_skarvik_authentic_old_buildings_to_final_v1.py')
+          if($LASTEXITCODE -ne 0){throw 'Native original actor migration source syntax invalid'}
+          Write-Host 'SKARVIK_FINAL_NATIVE_AUTHENTIC_SOURCE_COPY_PREFLIGHT_PASSED=true'
+      - name: Copy only genuine original graded/insular building StaticMesh actors into final World Partition
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_FINAL_BUILDING_MIGRATION_PLAN=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-final-coastal-migration-125-sites.json'
+          $env:SKARVIK_FINAL_ISLAND_MIGRATION_PLAN=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-island-migration-v1.json'
+          $env:SKARVIK_FINAL_BUILDING_MIGRATION_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-authentic-3d-building-migration-receipt.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\migrate_skarvik_authentic_old_buildings_to_final_v1.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_FINAL_BUILDING_MIGRATION_REPORT)){throw 'Native building copy report missing'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_FINAL_BUILDING_MIGRATION_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_FINAL_MIGRATED_ACTORS_STATE='+$r.state)
+          Write-Host ('SKARVIK_FINAL_AUTHENTIC_MAINLAND_ACTORS='+$r.originalActualGradedMeshActorsSaved)
+          Write-Host ('SKARVIK_FINAL_AUTHENTIC_ISLAND_BUILDINGS='+$r.originalActualIslandMeshActorsSaved)
+          Write-Host ('SKARVIK_FINAL_NATIVE_LOCALITIES_WITH_MESHES='+$r.nativeSiteCountWithActualOriginalMeshes)
+          Write-Host ('SKARVIK_FINAL_3D_ACTORS_REJECTED_AS_UNSAFE='+$r.rejectedActorCount)
+          if($exit -ne 0 -or $r.state -ne 'AUTHENTIC_GRADED_AND_ISLAND_3D_BUILDINGS_COPIED_TO_FINAL_SEVEN_ISLAND_WORLD_NOT_COMPLETE_GAME'){
+            throw ('Native original source building migration incomplete: '+$r.error)
+          }
+          Write-Host 'SKARVIK_FINAL_REAL_OLD_ACTOR_MESHES_MIGRATED_NATIVE_WP_SOURCE_MAPS_UNCHANGED=true'
+          Write-Host 'SKARVIK_FINAL_CITY_SAMPLE_720_AND_14798_ROADS_NOT_YET_ALL_MIGRATED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-final-graded-and-island-authentic-native-building-migration-receipt
+          path: skarvik-final-authentic-3d-building-migration-receipt.json
+          if-no-files-found: warn

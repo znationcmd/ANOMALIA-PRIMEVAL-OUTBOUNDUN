@@ -1,0 +1,35 @@
+name: SKARVIK 48km - coastal road and town continuity QA
+on:
+  push:
+    paths:
+      - 'scripts/plan_skarvik_continuity_next_batch.py'
+      - 'tests/test_skarvik_continuity_next_batch.py'
+      - '.github/workflows/skarvik-continuity-plan-20261110.yml'
+  pull_request:
+    paths:
+      - 'scripts/plan_skarvik_continuity_next_batch.py'
+      - 'tests/test_skarvik_continuity_next_batch.py'
+      - '.github/workflows/skarvik-continuity-plan-20261110.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  read-only-skarvik-planning:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify the REAL 125 towns and 382 road alignments on unchanged coastal source
+        run: |
+          python -m unittest discover -s tests -p 'test_skarvik_continuity_next_batch.py' -v
+          python scripts/plan_skarvik_continuity_next_batch.py --output /tmp/SKARVIK_48KM_CONTINUITY_AUDIT
+      - name: Save 67 proposed coastal relocations and missing regional-road gates
+        uses: actions/upload-artifact@v4
+        with:
+          name: SKARVIK-48KM-125-TOWNS-382-ROADS-REVIEW
+          path: /tmp/SKARVIK_48KM_CONTINUITY_AUDIT/
+          retention-days: 30
+          if-no-files-found: error

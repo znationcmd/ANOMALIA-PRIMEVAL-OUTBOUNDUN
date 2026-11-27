@@ -1,0 +1,66 @@
+name: SKARVIK - native loot build, persistence tests and PIE pickup validation
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths:
+      - 'unreal/Source/AnomaliaZPrigimalia/**'
+      - 'scripts/ue5/validate-build.py'
+      - 'scripts/ue5/stage-runtime-data.py'
+      - 'scripts/ue5/run-loot-playtest.py'
+      - 'public/config/loot*.json'
+      - 'public/config/rp*.json'
+      - '.github/workflows/skarvik-loot-native-validation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-loot:
+    defaults:
+      run:
+        working-directory: a
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: a
+          clean: false
+          persist-credentials: false
+      - name: Validate installed UE5 and isolated test scope
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(!$env:UE_ROOT){throw 'Installed UE_ROOT is required'}
+          if(!(Test-Path -LiteralPath (Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'))){throw 'UE5 Build.bat missing'}
+          if(!(Test-Path -LiteralPath 'unreal\AnomaliaZPrigimalia.uproject')){throw 'ANOMALIA project missing'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal process is active'}
+          Write-Host 'SKARVIK_LOOT_UE5_PREFLIGHT_OK=true'
+      - name: Compile UE5 Editor and Game and run all native loot transaction regressions
+        id: native
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $out="unreal\Saved\SkarvikLootValidation\run-$env:GITHUB_RUN_ID"
+          & $python scripts\ue5\validate-build.py --engine-root "$env:UE_ROOT" --output "$out" --run-tests --require-loot-tests
+          if($LASTEXITCODE -ne 0){throw 'Native UE5 build or required loot tests failed'}
+      - name: Run real Play In Editor pickup, inventory UI and persistence test
+        id: pie
+        if: success()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $out="unreal\Saved\SkarvikLootValidation\run-$env:GITHUB_RUN_ID\pie"
+          & $python scripts\ue5\run-loot-playtest.py --engine-root "$env:UE_ROOT" --output "$out"
+          if($LASTEXITCODE -ne 0){throw 'Actual loot PIE interaction test failed'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-native-loot-validation
+          path: a/unreal/Saved/SkarvikLootValidation/run-${{ github.run_id }}/**
+          if-no-files-found: error
+          compression-level: 6

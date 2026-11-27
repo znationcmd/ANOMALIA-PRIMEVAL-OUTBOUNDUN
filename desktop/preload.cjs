@@ -7,3 +7,8 @@ contextBridge.exposeInMainWorld('anomaliaTransport',Object.freeze({
  close:token=>ipcRenderer.send('anomalia:disconnect',token),
  subscribe:callback=>{const listener=(_event,data)=>callback(data);ipcRenderer.on('anomalia:socket',listener);return ()=>ipcRenderer.removeListener('anomalia:socket',listener);}
 }));
+
+contextBridge.exposeInMainWorld('anomaliaUnreal',Object.freeze({
+ listMaps:()=>ipcRenderer.invoke('anomalia:unreal-maps'),
+ openMap:packageName=>ipcRenderer.invoke('anomalia:unreal-open-map',packageName)
+}));

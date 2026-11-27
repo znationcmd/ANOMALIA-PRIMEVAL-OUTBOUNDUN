@@ -1,0 +1,53 @@
+name: SKARVIK - stage ALL City Sample binary assets (guarded, no overwrites)
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-citysample-full-assets-stage.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  stage-city-sample-binaries:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          clean: false
+      - name: Audit total asset size and disk space, fail safely if incomplete
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\stage-skarvik-citysample-full-assets.ps1'
+          $report=Join-Path $env:GITHUB_WORKSPACE 'skarvik-city-assets-preflight.json'
+          & $script -ReportPath $report
+          if($LASTEXITCODE -ne 0){throw 'Full City Sample source cannot fit safely on C or is incomplete: inspect preflight'}
+          $json=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if($json.state -ne 'READY_TO_COPY_FULL_CITY_ASSETS' -or !$json.copyAllowed){throw 'Copy not approved by staging gate'}
+          Write-Host 'SKARVIK_FULL_CITY_COPY_SAFE_TO_START=true'
+      - name: Actually copy all city assets into isolated UE5 staging (NO writes on D)
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\stage-skarvik-citysample-full-assets.ps1'
+          $report=Join-Path $env:GITHUB_WORKSPACE 'skarvik-city-assets-copy.json'
+          & $script -Apply -ReportPath $report
+          if($LASTEXITCODE -ne 0){throw 'Full City Sample source copy failed: inspect report; do not claim import'}
+          $json=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if($json.state -ne 'FULL_CITY_BINARY_ASSETS_STAGED_WORLD_PARTITION_INTEGRATION_PENDING' -or !$json.cityAssetsCopied){throw 'Source City Sample binary import not verified'}
+          Write-Host 'SKARVIK_CITY_SAMPLE_BINARY_STAGING_COMPLETED_UNREAL_TEST_STILL_REQUIRED=true'
+      - name: Save proof, not licensed Epic binary assets
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skarvik-citysample-asset-copy-evidence
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            skarvik-city-assets-preflight.json
+            skarvik-city-assets-copy.json

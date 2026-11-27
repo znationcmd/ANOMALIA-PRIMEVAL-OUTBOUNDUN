@@ -1,0 +1,68 @@
+name: SKARVIK - add fourth real City Sample district next to original downtown core
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-real-citysample-fourth-district.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  real-city-sample-district-d4:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Protect original Big City, existing real first 540-city-mesh core and graded SKARVIK World Partition
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong stage marker'}
+          foreach($f in @(
+           'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+           (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+           (Join-Path $root 'Content\Map\Big_City_LVL.umap'),
+           (Join-Path $root 'Saved\SkarvikCity\VisibleBigCitySampleCoreV1\graded-before-visible-city.umap'))){
+            if(!(Test-Path -LiteralPath $f)){throw "City source or world backup missing: $f"}
+          }
+          if(Test-Path -LiteralPath (Join-Path $root 'Saved\SkarvikCity\VisibleBigCitySampleDistrictD4_20261101\graded-before-fourth-real-city-block.umap')){
+            throw 'Fourth City Sample district was already attempted; do not duplicate'
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval -ErrorAction SilentlyContinue).Count){throw 'Concurrent Unreal session active'}
+          if(([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB -lt 18){throw 'Insufficient C stage disk safety reserve'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\build_skarvik_real_citysample_fourth_district_d4.py')
+          if($LASTEXITCODE -ne 0){throw 'City Sample fourth district author Python invalid'}
+          Write-Host 'SKARVIK_CITY_SAMPLE_FOURTH_DISTRICT_PROTECTED_PREFLIGHT_OK=true'
+      - name: Save original Big City facades/roofs and street objects from separate 1700–2050m radius into existing 48km world
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\build_skarvik_real_citysample_fourth_district_d4.py'
+          $env:SKARVIK_VISIBLE_CITY_DISTRICT_D4_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-fourth-real-citysample-district.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_VISIBLE_CITY_DISTRICT_D4_REPORT)){throw 'No fourth real CitySample district native result'}
+          $d=Get-Content -LiteralPath $env:SKARVIK_VISIBLE_CITY_DISTRICT_D4_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_CITY_SAMPLE_FOURTH_DISTRICT_STATE='+$d.state)
+          Write-Host ('SKARVIK_CITY_SAMPLE_FOURTH_DISTRICT_NATIVE_MESH_ACTORS='+$d.realStaticMeshActorsSaved)
+          Write-Host ('SKARVIK_CITY_SAMPLE_FOURTH_DISTRICT_SOURCE_ACTORS='+$d.sourceActorCountSampled)
+          if($code -ne 0 -or $d.state -ne 'REAL_CITY_SAMPLE_FOURTH_DISTRICT_NATIVE_MESHES_SAVED_NO_FULL_CITY_CLAIM'){
+            throw ('Fourth genuine Big City district not saved: '+$d.error)
+          }
+          Write-Host 'SKARVIK_ORIGINAL_CITY_SAMPLE_FOURTH_REAL_DISTRICT_SAVED_NATIVE=true'
+          Write-Host 'SKARVIK_FULL_4KM_CITY_NPCS_TRAFFIC_AND_SM5_TEST_STILL_UNVERIFIED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-real-citysample-fourth-district-native-result
+          path: skarvik-fourth-real-citysample-district.json
+          if-no-files-found: warn

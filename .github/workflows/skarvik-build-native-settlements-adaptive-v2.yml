@@ -1,0 +1,92 @@
+name: SKARVIK - adaptive alpine terrain grade for 125 genuine 3D localities
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-build-native-settlements-adaptive-v2.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  build-all-settlements:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Guard all original maps, new 48km terrain, 125 unique sites and free space
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or ((Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555')){throw 'Untrusted C stage'}
+          if(!(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'))){throw 'Required 48km SKARVIK terrain missing'}
+          if(!(Test-Path -LiteralPath 'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap')){throw 'Protected original D map missing'}
+          $dest=Join-Path $root 'Content\Maps\SKARVIK_SETTLEMENTS_125_v2.umap'
+          if(Test-Path -LiteralPath $dest){throw 'Full settlement overlay already exists; do not overwrite'}
+          foreach($d in @('Content\Crowd','Content\Vehicle')){
+            if(Test-Path -LiteralPath (Join-Path $root $d)){throw "Excluded CitySample folder is present: $d"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Other Unreal editor running'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ("SKARVIK_125_PRE_FREE_C_GIB="+[math]::Round($free,2))
+          if($free -lt 19){throw 'C disk below 19GiB reserve; cannot safely author 124 more sites'}
+          $config=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $plan=Get-Content -LiteralPath $config -Raw|ConvertFrom-Json
+          if(@($plan.settlements).Count -ne 125){throw 'Expected 125 localities'}
+          if(@($plan.settlements|Select-Object -ExpandProperty id -Unique).Count -ne 125){throw 'Duplicate localities'}
+          if(@($plan.roads).Count -lt 124){throw 'Connected road network missing'}
+          if($plan.status -notlike '*NOT_DONE*'){throw 'Site plan must not falsely claim construction completed'}
+          Write-Host 'SKARVIK_125_REAL_BUILDING_LAYOUT_PREFLIGHT_PASSED=true'
+      - name: Compile and verify the already successful UE5 authoring code in pure Python
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          if(!(Test-Path -LiteralPath $python)){throw 'Bundled UE Python not installed'}
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_settlements_adaptive_v2.py'
+          & $python -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'Authoring script has syntax error: refuse Unreal launch'}
+          Write-Host 'SKARVIK_125_AUTHOR_PYTHON_VERIFIED=true'
+      - name: Author real buildings for all 124 non-CitySample sites in an independent UE5 World Partition overlay
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_SETTLEMENT_LAYOUT=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $env:SKARVIK_SETTLEMENT_AUTHOR_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-125-native-3d-overlay-adaptive-v2.json'
+          $env:SKARVIK_SETTLEMENT_SITE_LIMIT='125'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_settlements_adaptive_v2.py'
+          & $editor $project "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $exit=$LASTEXITCODE
+          $reportPath=$env:SKARVIK_SETTLEMENT_AUTHOR_REPORT
+          if(!(Test-Path -LiteralPath $reportPath)){throw "Native UE5 authoring report missing. UE exit=$exit"}
+          $data=Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
+          Write-Host ("SKARVIK_125_AUTHOR_STATE="+$data.state)
+          Write-Host ("SKARVIK_125_REAL_BUILDING_ACTORS="+$data.buildingsPhysicallyPlaced)
+          Write-Host ("SKARVIK_125_ACTUAL_LOCALITIES="+$data.settlementsWithRealBuildings)
+          if($exit -ne 0 -or $data.state -ne '125_SITE_REAL_BUILDINGS_SAVED_NOT_PLAYTESTED'){
+            throw ("Native 3D construction not complete: "+$data.error+" UE exit="+$exit)
+          }
+          if($data.settlementsWithRealBuildings -ne 124){throw 'Not all 124 non-CitySample sites received real actors'}
+          if($data.buildingsPhysicallyPlaced -lt 600){throw 'Suspiciously few placed meshes; reject completion claim'}
+          if(!(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\SKARVIK_SETTLEMENTS_125_v2.umap'))){throw '125-site World Partition overlay not saved'}
+          Write-Host 'SKARVIK_125_WORLD_PARTITION_OVERLAY_STATIC_3D_SAVED=true'
+          Write-Host 'SKARVIK_BIG_CITY_SOURCE_LEVEL_INSTANCE_STILL_PENDING=true'
+          Write-Host 'SKARVIK_MAIN_48KM_LANDSCAPE_UNCHANGED=true'
+          Write-Host 'SKARVIK_GAMEPLAY_ROADS_COLLISION_SM5_NOT_YET_TESTED=true'
+      - name: Record factual summary without uploading licensed 3D assets
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skarvik-125-sites-native-adaptive-v2-report
+          path: skarvik-125-native-3d-overlay-adaptive-v2.json
+          if-no-files-found: warn
+          retention-days: 30

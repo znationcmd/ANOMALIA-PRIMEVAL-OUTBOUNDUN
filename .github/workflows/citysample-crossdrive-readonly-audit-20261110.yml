@@ -1,0 +1,79 @@
+name: CITY SAMPLE - comparer originaux D et stage C sans modifier
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/citysample-crossdrive-readonly-audit-20261110.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  source-completeness:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          clean: false
+      - name: Comparer les deux chemins Big City et les assets sources, lecture seule
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $main='D:\ANOMALIA\unreal'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){
+            throw 'Untrusted Unreal staging'
+          }
+          $folders=@(
+            'Content\City',
+            'Content\Map',
+            'Content\Map\Big_City_LVL.umap',
+            'Content\__ExternalActors__\Map\Big_City_LVL',
+            'Content\__ExternalObjects__\Map\Big_City_LVL',
+            'Content\__ExternalActors__\Maps\PRIGIMALIA_SKARVIK_FINAL_v1',
+            'Plugins\CitySample',
+            'Plugins\CitySampleVehicles'
+          )
+          $records=@()
+          foreach($prefix in @($stage,$main)){
+            foreach($rel in $folders){
+              $path=Join-Path $prefix $rel
+              $rec=[ordered]@{location=$prefix;relativePath=$rel;present=$false;count=0;bytes=[int64]0;sampleFileNames=@()}
+              if(Test-Path -LiteralPath $path){
+                $rec.present=$true
+                $item=Get-Item -LiteralPath $path -Force
+                if($item.PSIsContainer){
+                  $samples=New-Object 'System.Collections.Generic.List[string]'
+                  Get-ChildItem -LiteralPath $path -File -Recurse -Force -ErrorAction Stop | ForEach-Object {
+                    $rec.count++
+                    $rec.bytes=[int64]$rec.bytes+[int64]$_.Length
+                    if($samples.Count -lt 5){$samples.Add($_.Name)}
+                  }
+                  $rec.sampleFileNames=@($samples)
+                }else{
+                  $rec.count=1;$rec.bytes=[int64]$item.Length;$rec.sampleFileNames=@($item.Name)
+                }
+              }
+              $records+=,$rec
+              Write-Host ('CITY_SAMPLE_COMPARE='+$prefix+'|'+$rel+'|'+$rec.count+'|'+$rec.bytes)
+            }
+          }
+          $output=[ordered]@{
+            state='CITY_SAMPLE_REAL_PC_C_AND_D_READONLY_AUDIT'
+            snapshotUtc=[DateTime]::UtcNow.ToString('o')
+            sourceUnmodified=$true
+            filesDeleted=0
+            results=$records
+          }
+          $output|ConvertTo-Json -Depth 6|Set-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'CITY_SAMPLE_COMPLETE_PC_COMPARISON.json') -Encoding UTF8
+          Write-Host 'CITY_SAMPLE_READ_ONLY_COMPARISON_SAVED=true'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CITY-SAMPLE-PC-C-D-REAL-SOURCE-COMPARISON
+          path: CITY_SAMPLE_COMPLETE_PC_COMPARISON.json
+          if-no-files-found: error
+          retention-days: 30

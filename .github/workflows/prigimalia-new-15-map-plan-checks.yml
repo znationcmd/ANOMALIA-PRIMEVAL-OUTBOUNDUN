@@ -1,0 +1,46 @@
+name: ANOMALIA - validate 15-map catalogue and 4 proposed terrain maths
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/prigimalia-new-15-map-plan-checks.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  maps-15:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate native 4 terrains with land ocean ice and island area estimates
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -pedantic -I unreal/Source/AnomaliaZPrigimalia tests/native/prigimalia_new_four_terrain_areas.cpp -o /tmp/prigimalia-fifteen-maps
+          /tmp/prigimalia-fifteen-maps
+      - name: Verify 11 original identities and 4 fresh independent worlds
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('public/config/anomalia-map-catalog.json').read_text(encoding='utf-8'))
+          assert data['mapCount']==15
+          rows=data['maps']
+          assert len(rows)==15 and len({r['id'] for r in rows})==15
+          assert len({r['saveNamespace'] for r in rows})==15
+          assert len({r['originalUnrealPackage'] for r in rows if r['originalUnrealPackage']})==11
+          exp={'ROSКАТVIA-B1':12.8,'НОГОКВ-51':15.3,'PARADISIOMANIA':10,'DEADROOT':8}
+          for name,size in exp.items():
+            m=next(r for r in rows if r['displayName']==name)
+            assert m['widthKm']==size==m['heightKm']
+            assert m['serverSelectable'] is False
+            assert m['validation']=='source-plan-only-native-world-not-yet-authored'
+            assert m['originalUnrealPackage'].startswith('/Game/Maps/PRIGIMALIA_')
+          a=next(r for r in rows if r['displayName']=='НОГОКВ-51')['areaTargetsKm2']
+          assert a=={'dryLand':83,'passableIce':22,'dryLandPlusIce':105,'openOcean':129.09}
+          p=next(r for r in rows if r['displayName']=='PARADISIOMANIA')['areaTargetsKm2']
+          assert p=={'mainland':60,'sea':30,'islands':10,'landTotal':70}
+          assert next(r for r in rows if r['displayName']=='DEADROOT')['gameMode']=='FULL_PVP_DEATHMATCH'
+          assert next(r for r in rows if r['displayName']=='DEADROOT')['targetLocalities']==0
+          assert next(r for r in rows if r['displayName']=='SKARVIK')['targetLocalities']==125
+          assert all(r['serverSelectable'] is False for r in rows[-4:])
+          print('ANOMALIA_15_MAP_IDENTITIES_UNALTERED_AND_4_NEW_DESIGNS_VERIFIED=true')
+          PY

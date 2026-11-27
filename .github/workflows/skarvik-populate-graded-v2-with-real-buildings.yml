@@ -1,0 +1,71 @@
+name: SKARVIK - put 124 authentic settlement building groups onto graded 48km World Partition
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-populate-graded-v2-with-real-buildings.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  populate:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Verify protected graded terrain and genuine model assets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong isolated native stage'}
+          $files=@(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Anomalia\Buildings\Lot1\SM_coastal_house_v1.uasset'),
+            (Join-Path $root 'Content\Anomalia\Buildings\Expansion1\SM_townhouse.uasset'))
+          foreach($f in $files){if(!(Test-Path -LiteralPath $f)){throw "Missing required source: $f"}}
+          if(Test-Path (Join-Path $root 'Saved\SkarvikCity\BeforePopulatingGradedV2\graded-v2-clean.umap')){throw 'Already attempted graded building population; refuse duplicate'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Editor already active'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ('SKARVIK_124_GRADED_3D_FREE_C_GIB='+[math]::Round($free,2))
+          if($free -lt 18){throw 'Disk below 18GB safety reserve'}
+          $master=Get-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json') -Raw | ConvertFrom-Json
+          if(@($master.settlements).Count -ne 125 -or @($master.roads).Count -ne 382){throw 'SKARVIK approved layout changed'}
+          Write-Host 'SKARVIK_124_GRADED_NATIVE_BUILDING_PREFLIGHT_OK=true'
+      - name: Author genuine StaticMesh buildings and collision on protected graded terrain
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\populate_skarvik_graded_v2_with_real_buildings.py'
+          & $python -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'Native population Python source does not compile'}
+          $env:SKARVIK_GRADED_V2_POPULATE_PLAN=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $env:SKARVIK_GRADED_V2_POPULATE_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-124-graded-native-buildings.json'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_GRADED_V2_POPULATE_REPORT)){throw "Missing real Unreal population report exit=$code"}
+          $r=Get-Content -LiteralPath $env:SKARVIK_GRADED_V2_POPULATE_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_GRADED_124_3D_STATUS='+$r.state)
+          Write-Host ('SKARVIK_GRADED_124_3D_SITES='+$r.settlementsBuilt)
+          Write-Host ('SKARVIK_GRADED_124_3D_ACTORS='+$r.buildingsPlaced)
+          if($code -ne 0 -or $r.state -ne '124_SITES_HAVE_REAL_UE5_MESHES_ON_GRADED_WORLD_NOT_GAMEPLAY_TESTED' -or $r.settlementsBuilt -ne 124 -or $r.buildingsPlaced -lt 620){
+            throw ('124-site native building population failed: '+$r.error)
+          }
+          Write-Host 'SKARVIK_GRADED_124_REAL_MESH_SITES_SAVED_ON_TERRAIN=true'
+          Write-Host 'SKARVIK_BIG_CITY_LEVEL_INSTANCE_AND_PIE_STILL_PENDING=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-graded-terrain-124-real-localities
+          path: skarvik-124-graded-native-buildings.json
+          if-no-files-found: warn

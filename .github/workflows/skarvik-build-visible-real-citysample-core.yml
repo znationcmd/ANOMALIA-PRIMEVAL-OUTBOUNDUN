@@ -1,0 +1,70 @@
+name: SKARVIK - save first actual original City Sample downtown mesh sector
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-build-visible-real-citysample-core.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  real-city-core:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Protect all existing graded SKARVIK and original City Sample assets before first genuine downtown core
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong stage marker'}
+          foreach($path in @('D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\RoadExpansionBatchC3_20261031\graded-pre-expansion.umap'))){
+            if(!(Test-Path -LiteralPath $path)){throw "Protected source or backup missing: $path"}
+          }
+          if(Test-Path (Join-Path $root 'Saved\SkarvikCity\VisibleBigCitySampleCoreV1\graded-before-visible-city.umap')){
+            throw 'City sector native creation was already attempted; no duplication'
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal session running'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ('SKARVIK_DOWNTOWN_CORE_FREE_C_GIB='+[math]::Round($free,2))
+          if($free -lt 18){throw 'C disk free below safe 18 GiB'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\build_skarvik_visible_citysample_downtown_core.py')
+          if($LASTEXITCODE -ne 0){throw 'Real City Sample source mesh pilot syntax invalid'}
+          Write-Host 'SKARVIK_DOWNTOWN_REAL_ORIGINAL_CITYSAMPLE_MESH_PREFLIGHT_OK=true'
+      - name: Construct original City Sample facade roof and street mesh actors in protected graded SKARVIK city center
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_VISIBLE_CITY_CORE_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-real-original-citysample-downtown-core.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\build_skarvik_visible_citysample_downtown_core.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_VISIBLE_CITY_CORE_REPORT)){throw 'City sector native Unreal report missing'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_VISIBLE_CITY_CORE_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_REAL_CITY_DOWNTOWN_CORE_STATE='+$r.state)
+          Write-Host ('SKARVIK_REAL_CITY_SOURCE_ACTORS_SAMPLED='+$r.sourceActorCountSampled)
+          Write-Host ('SKARVIK_REAL_CITY_COMPONENT_MESH_ACTORS_SAVED='+$r.realStaticMeshActorsSaved)
+          if($exit -ne 0 -or $r.state -ne 'REAL_CITY_SAMPLE_ARCHITECTURE_MESHES_SAVED_IN_SKARVIK_CORE_ONLY_NOT_FULL_CITY'){
+            throw ('Genuine City Sample core was not saved: '+$r.error)
+          }
+          Write-Host 'SKARVIK_REAL_ORIGINAL_CITYSAMPLE_DOWNTOWN_ARCHITECTURE_SAVED_IN_GRADED_WORLD=true'
+          Write-Host 'SKARVIK_CITY_SAMPLE_ALL_86K_ACTORS_AND_DRIVABILITY_STILL_NOT_VERIFIED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-real-citysample-downtown-core-actor-mesh-receipts
+          path: skarvik-real-original-citysample-downtown-core.json
+          if-no-files-found: warn

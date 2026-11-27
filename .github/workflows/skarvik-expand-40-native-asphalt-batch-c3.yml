@@ -1,0 +1,73 @@
+name: SKARVIK - add 40 more C3 road routes to 48km graded world
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-expand-40-native-asphalt-batch-c3.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  batch-c3:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Protect 1039 native buildings and existing 23 routes before second asphalt batch
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Untrusted stage'}
+          foreach($file in @(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\RoadExpansion20261031\graded-pre-expansion.umap'))){
+            if(!(Test-Path -LiteralPath $file)){throw "Required old world missing: $file"}
+          }
+          if(Test-Path (Join-Path $root 'Saved\SkarvikCity\RoadExpansionBatchC3_20261031\graded-pre-expansion.umap')){
+            throw 'Batch C3 was already attempted; no duplicate meshes'
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal already running'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ('SKARVIK_C3_FREE_C_GIB='+[math]::Round($free,2))
+          if($free -lt 18){throw 'Disk below 18 GiB safety threshold'}
+          $layout=Get-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json') -Raw|ConvertFrom-Json
+          if(@($layout.settlements).Count -ne 125 -or @($layout.roads).Count -ne 382){throw 'Unapproved masterplan'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\expand_skarvik_native_asphalt_batch_c3.py')
+          if($LASTEXITCODE -ne 0){throw 'Batch C3 Python syntax invalid'}
+      - name: Construct real City Sample asphalt StaticMesh actors on approved graded route tiles only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_ROAD_EXPANSION_LAYOUT=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $env:SKARVIK_ROAD_EXPANSION_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-40-asphalt-batch-c3.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\expand_skarvik_native_asphalt_batch_c3.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_ROAD_EXPANSION_REPORT)){throw 'No native road batch report'}
+          $d=Get-Content -LiteralPath $env:SKARVIK_ROAD_EXPANSION_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_C3_ROAD_BATCH_STATE='+$d.state)
+          Write-Host ('SKARVIK_C3_ROUTES='+$d.additionalRouteCount)
+          Write-Host ('SKARVIK_C3_ROAD_ACTORS='+$d.additionalRoadMeshActors)
+          Write-Host ('SKARVIK_C3_ROAD_LENGTH_METRES='+$d.newRoadSurfaceMetres)
+          if($code -ne 0 -or $d.state -ne 'BATCH_C3_NATIVE_ASPHALT_EXPANSION_SAVED_NOT_DRIVEN' -or $d.additionalRouteCount -lt 10){
+            throw ('Native C3 road placement incomplete: '+$d.error)
+          }
+          Write-Host 'SKARVIK_BATCH_C3_REAL_ASPHALT_SAVED_NOT_PLAYTESTED=true'
+          Write-Host 'SKARVIK_CITY_SAMPLE_FULL_ROADS_BRIDGES_TRAFFIC_STILL_UNVERIFIED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-native-grade-asphalt-batch-c3-40
+          path: skarvik-40-asphalt-batch-c3.json
+          if-no-files-found: warn

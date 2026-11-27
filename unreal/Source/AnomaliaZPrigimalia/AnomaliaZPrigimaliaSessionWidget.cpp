@@ -1,5 +1,6 @@
 #include "AnomaliaZPrigimaliaSessionWidget.h"
 #include "AnomaliaZPrigimaliaGameMode.h"
+#include "AnomaliaZPrigimaliaServerBrowserLibrary.h"
 #include "AnomaliaZPrigimaliaSurvivor.h"
 #include "AnomaliaZPrigimaliaStatusWidget.h"
 #include "Blueprint/WidgetTree.h"
@@ -543,6 +544,16 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildServerBrowser(UCanvasPanel* Canvas)
     ServerSearch->SetHintText(FText::FromString(TEXT("Rechercher un serveur ou une carte...")));
     ServerSearch->OnTextChanged.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ServerSearchChanged);
     List->AddChildToVerticalBox(ServerSearch)->SetPadding(FMargin(0,4,12,8));
+    Label(List,TEXT("FILTRER LES SERVEURS PAR CARTE (15 MONDES INDÉPENDANTS)"),13,FLinearColor(.79f,.86f,.89f));
+    MapFilterSelect=WidgetTree->ConstructWidget<UComboBoxString>(UComboBoxString::StaticClass(),TEXT("ServerBrowserMapFilter"));
+    MapFilterSelect->AddOption(TEXT("Toutes les cartes"));
+    for(const FAnomaliaZPrigimaliaWorldChoice& Map : UAnomaliaZPrigimaliaServerBrowserLibrary::GetWorldChoices())
+        MapFilterSelect->AddOption(Map.DisplayName);
+    MapFilterSelect->SetSelectedIndex(0);
+    MapFilterSelect->OnSelectionChanged.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::MapFilterChanged);
+    List->AddChildToVerticalBox(MapFilterSelect)->SetPadding(FMargin(0,4,12,8));
+    Label(List,TEXT("Une carte visible dans la liste ne signifie pas qu'un serveur y est déjà ouvert."),11,
+        FLinearColor(.90f,.77f,.60f));
     ServerSelect=WidgetTree->ConstructWidget<UComboBoxString>(UComboBoxString::StaticClass(),TEXT("ServerBrowserSelect"));
     ServerSelect->OnSelectionChanged.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ServerSelectionChanged);
     List->AddChildToVerticalBox(ServerSelect)->SetPadding(FMargin(0,4,12,8));
@@ -1190,6 +1201,7 @@ void UAnomaliaZPrigimaliaSessionWidget::TabOfficialServers(){ServerCategory=TEXT
 void UAnomaliaZPrigimaliaSessionWidget::TabCommunityServers(){ServerCategory=TEXT("Communautaire");RefreshServerBrowser();}
 void UAnomaliaZPrigimaliaSessionWidget::TabFavoriteServers(){ServerCategory=TEXT("Favoris");RefreshServerBrowser();}
 void UAnomaliaZPrigimaliaSessionWidget::ServerSearchChanged(const FText&){RefreshServerBrowser();}
+void UAnomaliaZPrigimaliaSessionWidget::MapFilterChanged(FString, ESelectInfo::Type){RefreshServerBrowser();}
 void UAnomaliaZPrigimaliaSessionWidget::ServerSelectionChanged(FString SelectedItem,ESelectInfo::Type)
 {
     SelectedServerId.Empty();
@@ -1266,6 +1278,9 @@ void UAnomaliaZPrigimaliaSessionWidget::RefreshServerBrowser()
     {
         if(ServerCategory==TEXT("Favoris") ? !Entry.bFavorite :
             !Entry.Category.Equals(ServerCategory,ESearchCase::IgnoreCase)) continue;
+        const FString RequestedMap=MapFilterSelect?MapFilterSelect->GetSelectedOption():TEXT("Toutes les cartes");
+        if(!RequestedMap.IsEmpty() && RequestedMap!=TEXT("Toutes les cartes") &&
+           !Entry.Map.Equals(RequestedMap,ESearchCase::IgnoreCase))continue;
         if(!Query.IsEmpty() && !Entry.Name.Contains(Query,ESearchCase::IgnoreCase) &&
             !Entry.Map.Contains(Query,ESearchCase::IgnoreCase)) continue;
         const FString Option=Entry.Name+TEXT("  |  ")+Entry.Map+TEXT("  |  ")+Entry.Address;
@@ -1294,8 +1309,23 @@ void UAnomaliaZPrigimaliaSessionWidget::RefreshServerBrowser()
         Empty->SetAutoWrapText(true);
         Empty->SetColorAndOpacity(FSlateColor(FLinearColor(.88f,.86f,.84f,1.f)));
         ServerResults->AddChildToVerticalBox(Empty);
-        ServerStatus->SetText(FText::FromString(
-            TEXT("Liste vide. Les connexions et joueurs doivent être vérifiés auprès d'un véritable serveur.")));
+        const FString RequestedMap=MapFilterSelect?MapFilterSelect->GetSelectedOption():TEXT("Toutes les cartes");
+        if(!RequestedMap.IsEmpty() && RequestedMap!=TEXT("Toutes les cartes"))
+        {
+            FString Availability=TEXT("Carte enregistrée dans le catalogue.");
+            for(const FAnomaliaZPrigimaliaWorldChoice& M : UAnomaliaZPrigimaliaServerBrowserLibrary::GetWorldChoices())
+                if(M.DisplayName==RequestedMap)
+                {
+                    Availability=M.bNativePackageFound?
+                        TEXT("Le fichier de niveau est présent, mais aucun serveur n'a été vérifié.") :
+                        TEXT("Le niveau natif n'est pas disponible dans cette installation.");
+                    break;
+                }
+            ServerStatus->SetText(FText::FromString(RequestedMap+TEXT(" : ")+Availability));
+        }
+        else
+            ServerStatus->SetText(FText::FromString(
+                TEXT("Liste vide. Les connexions et joueurs doivent être vérifiés auprès d'un véritable serveur.")));
     }
 }
 void UAnomaliaZPrigimaliaSessionWidget::JoinSelectedServer()

@@ -1,0 +1,101 @@
+name: SKARVIK - migrate authentic fifth City Sample district E5 to original seven island final world
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-final-migrate-fifth-real-citysample-e5.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  migrate-one-native-original-fifth-city-district:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Verify native source, protected fifth district, spare space and no concurrent Unreal
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){
+            throw 'Untrusted staged native project marker'}
+          foreach($f in @('D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'))){
+            if(!(Test-Path -LiteralPath $f)){throw "Missing protected original/final map $f"}
+          }
+          if(Test-Path (Join-Path $root 'Saved\SkarvikCity\FinalFifthRealCitySampleDistrictE5_20261101\final-before-fifth-original-city-slice.umap')){
+            throw 'Native fifth city source sector already imported or attempted, no duplicate'
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){
+            throw 'Concurrent Unreal import or editing active'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ('SKARVIK_FINAL_FIFTH_CITY_NATIVE_C_STAGE_GIB='+[math]::Round($free,2))
+          if($free -lt 12){throw 'Insufficient native C stage space for real 3D City Sample'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          foreach($script in @('unreal\Scripts\migrate_skarvik_final_genuine_citysample_fifth_sector_e5.py',
+            'unreal\Scripts\verify_skarvik_final_fifth_citysample_sector_e5_reopened.py')){
+            & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE $script)
+            if($LASTEXITCODE -ne 0){throw "Fifth native original city source script syntax invalid: $script"}
+          }
+          Write-Host 'SKARVIK_FINAL_FIFTH_NATIVE_BIG_CITY_SOURCE_PREFLIGHT=true'
+      - name: Migrate real E5 3D City Sample source actors inside the reserved 4x4 km dry city footprint
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_FINAL_E5_CITY_MIGRATION_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-native-real-citysample-fifth-sector-build.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\migrate_skarvik_final_genuine_citysample_fifth_sector_e5.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_FINAL_E5_CITY_MIGRATION_REPORT)){throw 'Actual fifth source City Sample migration report missing'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_FINAL_E5_CITY_MIGRATION_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_FINAL_NATIVE_FIFTH_CITY_MIGRATION_STATE='+$r.state)
+          Write-Host ('SKARVIK_FINAL_NATIVE_FIFTH_CITY_REAL_3D_MESHES='+$r.native3DCityMeshesAdded)
+          Write-Host ('SKARVIK_FINAL_NATIVE_FIFTH_CITY_SOURCE_REJECTED='+@($r.outOfFootprintOrUnsafeRejected).Count)
+          if($r.state -ne 'SKARVIK_FINAL_FIFTH_SOURCE_CITYSAMPLE_SECTOR_REAL_MESHES_SAVED_PARTIAL_CITY' -or
+             $r.native3DCityMeshesAdded -lt 15 -or $r.sourceMapsModified -ne $false){
+            throw ('No verified native fifth source CitySample mesh migration: '+$r.error)
+          }
+          if($exit -ne 0){Write-Host ('SKARVIK_NATIVE_UE_AFTER_CITY_SAVE_SHUTDOWN_NONZERO='+$exit)}
+          Write-Host 'SKARVIK_FINAL_FIFTH_ORIGINAL_CITYSAMPLE_REAL_SOURCE_MESHES_SAVED=true'
+      - name: Independently reopen native final World Partition and confirm all fifth sector assets and original roads persist
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_FINAL_FIFTH_CITY_BUILD_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-native-real-citysample-fifth-sector-build.json'
+          $env:SKARVIK_FINAL_FIFTH_CITY_REOPEN_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-native-real-citysample-fifth-sector-reopen.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_final_fifth_citysample_sector_e5_reopened.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_FINAL_FIFTH_CITY_REOPEN_REPORT)){throw 'Native fifth CitySample independent reopen proof missing'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_FINAL_FIFTH_CITY_REOPEN_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_FINAL_FIFTH_REAL_CITY_REOPEN_STATE='+$r.state)
+          Write-Host ('SKARVIK_FINAL_FIFTH_REAL_CITY_ACTORS_REOPENED='+$r.native3DActorCounts.newFifthSourceCityMeshes)
+          Write-Host ('SKARVIK_FINAL_TOTAL_AUTHENTIC_CITYSOURCE_MESH_ACTORS='+$r.cityTotal)
+          if($r.state -ne 'SKARVIK_FINAL_FIFTH_ORIGINAL_CITYSAMPLE_NATIVE_MESHES_PERSISTED_NOT_PLAYTESTED' -or
+             $r.native3DActorCounts.newFifthSourceCityMeshes -lt 15 -or $r.originalSourceWorldsUnchanged -ne $true){
+            throw ('Original fifth native CitySample real meshes did not persist: '+$r.error)
+          }
+          if($exit -ne 0){Write-Host ('SKARVIK_NATIVE_UE_READONLY_CITY_REOPEN_SHUTDOWN_NONZERO='+$exit)}
+          Write-Host 'SKARVIK_FINAL_NATIVE_FIFTH_REAL_CITY_SAMPLE_SOURCE_MESHES_PERSISTED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-final-native-fifth-authentic-citysample-source-meshes
+          path: |
+            skarvik-final-native-real-citysample-fifth-sector-build.json
+            skarvik-final-native-real-citysample-fifth-sector-reopen.json
+          if-no-files-found: warn

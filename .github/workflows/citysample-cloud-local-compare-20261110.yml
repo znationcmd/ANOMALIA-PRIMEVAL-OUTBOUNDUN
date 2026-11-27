@@ -1,0 +1,74 @@
+name: ANOMALIA - inventaire City Sample PC sans modification
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/citysample-cloud-local-compare-20261110.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  city-sample-readonly:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          clean: false
+      - name: Comparer les dossiers natifs City Sample du projet sur C et D
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted Unreal staging'}
+          $targets=@(
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\CitySample',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\City',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\Map',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\__ExternalActors__\Map\Big_City_LVL',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Plugins\CitySampleVehicles',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Plugins\CitySample',
+            'D:\ANOMALIA\unreal\Content\CitySample',
+            'D:\ANOMALIA\unreal\Content\City',
+            'D:\ANOMALIA\unreal\Content\Map',
+            'D:\ANOMALIA\unreal\Plugins\CitySampleVehicles',
+            'D:\ANOMALIA\CitySample_5.8'
+          )
+          $readOnly=@(foreach($path in $targets){
+            if(!(Test-Path -LiteralPath $path)){
+              [ordered]@{path=$path;exists=$false;files=0;bytes=0;top=@()}
+              continue
+            }
+            $item=Get-Item -LiteralPath $path
+            $top=@(Get-ChildItem -LiteralPath $path -Force -ErrorAction Stop |
+              Select-Object -First 80 | ForEach-Object {$_.Name})
+            $num=0;$total=[int64]0
+            if($item.PSIsContainer){
+              Get-ChildItem -LiteralPath $path -Recurse -Force -File -ErrorAction SilentlyContinue | ForEach-Object {
+                $num++
+                $total+=[int64]$_.Length
+              }
+            }else{$num=1;$total=[int64]$item.Length}
+            [ordered]@{path=$path;exists=$true;files=$num;bytes=$total;sizeGiB=[math]::Round($total/1GB,3);top=$top}
+          })
+          $report=[ordered]@{
+            mode='READ_ONLY_CITY_SAMPLE_LOCAL_INVENTORY'
+            time=[DateTime]::UtcNow.ToString('o')
+            noFilesDeleted=$true
+            noContentModified=$true
+            locations=$readOnly
+          }
+          $report | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'CITY_SAMPLE_LOCAL_INVENTORY_20261110.json') -Encoding UTF8
+          foreach($entry in $readOnly){
+            Write-Host ('CITY_SAMPLE_PC_SOURCE='+$entry.path+';Exists='+$entry.exists+';Files='+$entry.files+';Bytes='+$entry.bytes)
+          }
+          Write-Host 'CITY_SAMPLE_PC_SOURCE_READ_ONLY=true'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CITY-SAMPLE-LOCAL-PC-INVENTORY-20261110
+          path: CITY_SAMPLE_LOCAL_INVENTORY_20261110.json
+          if-no-files-found: error
+          retention-days: 14

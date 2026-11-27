@@ -42,11 +42,39 @@ struct FAnomaliaZPrigimaliaServerCard
     int32 PingMs = -1;
 };
 
+/** Distinct world entry for the 15-map browser; a catalogue entry is NEVER a server. */
+USTRUCT(BlueprintType)
+struct FAnomaliaZPrigimaliaWorldChoice
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Maps")
+    FString MapId;
+
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Maps")
+    FString DisplayName;
+
+    /** Unreal native world package, absent when original source mapping is still unknown. */
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Maps")
+    FString WorldPackage;
+
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Maps")
+    bool bNativePackageFound = false;
+
+    /** False until the separate PIE/SM5 and server deployment checks pass. */
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Maps")
+    bool bMultiplayerVerified = false;
+};
+
 UCLASS()
 class ANOMALIAZPRIGIMALIA_API UAnomaliaZPrigimaliaServerBrowserLibrary : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public:
+    /** Real 15-world catalogue; no fabricated server lobbies or success flags. */
+    UFUNCTION(BlueprintPure, Category="ANOMALIA|Maps")
+    static TArray<FAnomaliaZPrigimaliaWorldChoice> GetWorldChoices();
+
     /** Defines 5 PVE + 5 PVP + 5 RP official provisioning slots. None are claimed online. */
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Servers")
     static TArray<FAnomaliaZPrigimaliaServerCard> GetOfficialServerTemplates();

@@ -1,0 +1,89 @@
+name: SKARVIK - construct real local streets at 39 villages retry 2 (village-lane geometry)
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-real-local-streets-village-lane-retry2.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-local-streets:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-24-candidates-native-real-gateway-asphalt-results
+          run-id: 41277272235
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts/first-native
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-second-24-native-town-gateways-build-result
+          run-id: 41288947224
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts/second-native
+      - name: Check isolated staging and backup safety before local village roads
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong C staging marker'}
+          foreach($p in @(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\First24RegionalTownGateways20261101\graded-before-gateway.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\Second24RegionalTownGateways20261101\graded-before-gateway.umap'))){
+            if(!(Test-Path -LiteralPath $p)){throw "Protected source map or previous backup missing: $p"}
+          }
+          if(Test-Path -LiteralPath (Join-Path $root 'Saved\SkarvikCity\NativeStreetRingAt39GatewaysRetry2_20261101\graded-before-local-ring.umap')){throw 'Local road pilot already attempted; no duplicate actors'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal Editor already running'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ('SKARVIK_LOCAL_STREET_REAL_C_FREE_GIB='+[math]::Round($free,2))
+          if($free -lt 18){throw 'Not enough isolated C disk space'}
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\build_skarvik_real_local_streets_at_39_gateways_retry2.py')
+          if($LASTEXITCODE -ne 0){throw 'Native village street script syntax failed'}
+          Write-Host 'SKARVIK_REAL_VILLAGE_LOCAL_STREETS_PREFLIGHT_OK=true'
+      - name: Extend real asphalt on town perimeters, reject steep or building-overlapping sections
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_LOCAL_RING_MASTERPLAN=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-transport-network-v2.json'
+          $env:SKARVIK_LOCAL_RING_GATEWAYS_V1=Join-Path $env:GITHUB_WORKSPACE 'receipts\first-native\skarvik-real-ue5-village-gateway-actors.json'
+          $env:SKARVIK_LOCAL_RING_GATEWAYS_V2=Join-Path $env:GITHUB_WORKSPACE 'receipts\second-native\skarvik-second-native-town-gateways.json'
+          $env:SKARVIK_LOCAL_RING_NATIVE_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-39-village-local-ring-native-roads-retry2.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\build_skarvik_real_local_streets_at_39_gateways_retry2.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_LOCAL_RING_NATIVE_REPORT)){throw 'Missing native street extension report'}
+          $d=Get-Content -LiteralPath $env:SKARVIK_LOCAL_RING_NATIVE_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_REAL_LOCAL_STREET_STATE='+$d.state)
+          Write-Host ('SKARVIK_REAL_LOCAL_STREET_MESH_ACTORS='+$d.realLocalStreetActors)
+          Write-Host ('SKARVIK_REAL_LOCAL_STREET_METRES='+$d.realLocalStreetMetres)
+          Write-Host ('SKARVIK_REAL_LOCAL_STREET_CONNECTED_TOWNS='+$d.settlementsWithFirstRingRoad)
+          Write-Host ('SKARVIK_REAL_LOCAL_STREET_REJECTED='+@($d.rejects).Count)
+          if($code -ne 0 -or $d.state -ne 'REAL_NATIVE_SHORT_LOCAL_STREETS_AT_EXISTING_GATEWAYS_SAVED_NOT_DRIVEN' -or $d.realLocalStreetActors -lt 54){
+            throw ('Native local street extensions failed: '+$d.error)
+          }
+          Write-Host 'SKARVIK_REAL_NAMED_LOCAL_STREET_ASPHALT_SAVED_NATIVE_WORLD=true'
+          Write-Host 'SKARVIK_ALL_992_STREETS_NOT_FINISHED_SM5_DRIVE_TEST_PENDING=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-real-village-perimeter-streets-39-gateways-retry2
+          path: skarvik-39-village-local-ring-native-roads-retry2.json
+          if-no-files-found: warn

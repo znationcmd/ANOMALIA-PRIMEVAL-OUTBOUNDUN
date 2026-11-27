@@ -1,0 +1,86 @@
+name: SKARVIK - REAL native final-coast connector height audit (read only)
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths:
+      - '.github/workflows/skarvik-native-final-connector-check.yml'
+      - 'unreal/Scripts/audit_skarvik_final_connector_height_readonly.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  safe-native-coast-review:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Verify trusted C staging project and original protected maps
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or
+              (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){
+            throw 'Untrusted native SKARVIK stage; will not open Unreal'
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){
+            throw 'Unreal is already running; no concurrent stage access'
+          }
+          foreach($path in @(
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'),
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          )){if(!(Test-Path -LiteralPath $path)){throw ('Missing protected map '+$path)}}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'scripts\skarvik_design_missing_connectors.py')
+          if($LASTEXITCODE -ne 0){throw 'SKARVIK design Python syntax error'}
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_final_connector_height_readonly.py')
+          if($LASTEXITCODE -ne 0){throw 'SKARVIK native Python syntax error'}
+      - name: Create 20 shortest survey candidates from existing native map source
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $dst=Join-Path $env:RUNNER_TEMP 'skarvik-next-coastal-connectors-norewrite'
+          if(Test-Path -LiteralPath $dst){throw 'A previous audit folder already exists'}
+          & $py (Join-Path $env:GITHUB_WORKSPACE 'scripts\skarvik_design_missing_connectors.py') --out $dst
+          if($LASTEXITCODE -ne 0){throw 'Cannot produce safe final-coast review'}
+          $envFile=Join-Path $env:GITHUB_WORKSPACE '.skconn-env'
+          Write-Host ('SKARVIK_NATIVE_REVIEW_ROOT='+$dst)
+      - name: Reopen final native Landscape and audit 20 candidate slopes - NEVER SAVE A MAP
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_NATIVE_NEW_CONNECTORS_INPUT=Join-Path $env:RUNNER_TEMP 'skarvik-next-coastal-connectors-norewrite\skarvik-all-connector-review.json'
+          $env:SKARVIK_NATIVE_NEW_CONNECTORS_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-real-native-connector-height-check.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_final_connector_height_readonly.py'
+          & $editor (Join-Path $stage 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $exitCode=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_NATIVE_NEW_CONNECTORS_REPORT)){throw 'No native report'}
+          $result=Get-Content -LiteralPath $env:SKARVIK_NATIVE_NEW_CONNECTORS_REPORT -Raw|ConvertFrom-Json
+          if($result.state -ne 'READONLY_NATIVE_FINAL_COAST_CONNECTOR_HEIGHT_SURVEY_COMPLETE' -or
+             $result.sourceWorldsUnchanged -ne $true -or $result.routeMeshesPlaced -ne 0){
+            throw ('Native audit not proven safe: '+$result.error)
+          }
+          if($exitCode -ne 0){Write-Host ('WARNING: native read-only UE shutdown code '+$exitCode)}
+          Write-Host ('SKARVIK_READONLY_NATIVE_CONNECTOR_CANDIDATES_SURVEYED='+$result.inspected)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: SKARVIK-REAL-NATIVE-COAST-CONNECTOR-READONLY-RESULT
+          path: |
+            skarvik-real-native-connector-height-check.json
+            ${{ runner.temp }}/skarvik-next-coastal-connectors-norewrite/
+          if-no-files-found: warn
+          retention-days: 30

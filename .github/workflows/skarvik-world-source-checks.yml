@@ -1,0 +1,41 @@
+name: SKARVIK 48km - validate terrain and settlements source (no native asset changes)
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths:
+      - 'unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaSkarvikTerrain.h'
+      - 'unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaWorldImportLibrary.*'
+      - 'unreal/Scripts/create_skarvik_city_world.py'
+      - 'public/config/skarvik-world-layout-48km.json'
+      - 'public/config/skarvik-citysample-sm5-replacement.json'
+      - 'tests/native/skarvik_city_48km_height.cpp'
+      - 'tests/test_skarvik_world_layout_48km.py'
+      - 'tests/test_skarvik_explorable_buildings_plan.py'
+      - 'public/config/skarvik-explorable-buildings.json'
+      - '.github/workflows/skarvik-world-source-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-original-terrain-and-regions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and test source-only 48km heightmap
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic \
+            -I unreal/Source/AnomaliaZPrigimalia \
+            tests/native/skarvik_city_48km_height.cpp -o /tmp/skarvik-terrain-test
+          /tmp/skarvik-terrain-test
+      - name: Check biome locations and road graph
+        run: python -m unittest discover -s tests -p 'test_skarvik_world_layout_48km.py' -v
+      - name: Verify real interiors requirements and honest implementation status
+        run: python -m unittest discover -s tests -p 'test_skarvik_explorable_buildings_plan.py' -v
+      - name: Validate Unreal Editor-only Python source
+        run: python -m py_compile unreal/Scripts/create_skarvik_city_world.py
+      - name: Confirm native City Sample has not been falsely packaged
+        run: |
+          test ! -f unreal/Content/Maps/PRIGIMALIA_SKARVIK_CITY_v1.umap
+          test ! -d unreal/Content/CitySample
+          echo "SKARVIK_48KM_SOURCE_CHECKS_PASS_NATIVE_IMPORT_STILL_PENDING"

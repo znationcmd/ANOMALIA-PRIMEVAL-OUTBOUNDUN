@@ -1,0 +1,96 @@
+name: SKARVIK - enable installed CitySample engine plugin runtime dependencies and load test
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-fix-citysample-dll-loading.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          clean: false
+      - name: Safely enable missing engine plugins in isolated staging descriptor
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $backup=Join-Path $root 'Saved\SkarvikCity\pre-optional-plugins-ueproject.json'
+          if((Get-Content (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Refusing untrusted stage'}
+          if(!(Test-Path -LiteralPath 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject')){throw 'Original D project missing'}
+          if(Test-Path $backup){throw 'Previous backup exists: refusing overwrite'}
+          foreach($name in @('Crowd','Vehicle')){
+            if(Test-Path -LiteralPath (Join-Path $root ('Content\'+$name))){throw "Forbidden Content/$name is present"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal editor already running'}
+          $data=Get-Content $project -Raw|ConvertFrom-Json
+          foreach($name in @('CitySample','CitySampleAnimGraphRuntime')){
+            if(-not @($data.Modules|Where-Object{$_.Name -eq $name}).Count){throw "Compiled native module declaration absent: $name"}
+          }
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ("SKARVIK_DLL_FIX_C_FREE_GIB={0:N2}" -f $free)
+          if($free -lt 20){throw 'Insufficient C free space for Unreal load test'}
+          $engine=Join-Path $env:UE_ROOT 'Engine\Plugins'
+          foreach($plugin in @('Gauntlet','ElectraPlayer','Niagara')){
+            $found=@(Get-ChildItem -LiteralPath $engine -Filter ($plugin+'.uplugin') -File -Recurse -ErrorAction Stop)
+            if($found.Count -lt 1){throw ('Required engine plugin missing: '+$plugin)}
+            Write-Host "SKARVIK_DLL_FIX_ENGINE_PLUGIN_AVAILABLE=$plugin"
+          }
+          Copy-Item -LiteralPath $project -Destination $backup
+          foreach($name in @('Gauntlet','ElectraPlayer','Niagara')){
+            $existing=@($data.Plugins|Where-Object{$_.Name -eq $name})
+            if($existing.Count -gt 0){
+              $existing[0].Enabled=$true
+            }else{
+              $data.Plugins=@($data.Plugins)+@([pscustomobject]@{Name=$name;Enabled=$true})
+            }
+            Write-Host "SKARVIK_DLL_FIX_ENGINE_PLUGIN_ENABLED=$name"
+          }
+          [IO.File]::WriteAllText($project,($data|ConvertTo-Json -Depth 32),(New-Object System.Text.UTF8Encoding($false)))
+          Write-Host 'SKARVIK_DLL_FIX_STAGE_DESCRIPTOR_CHANGED_ONLY_C=true'
+      - name: Try native CitySample world asset load in Unreal 5.8 without modifying any level
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_citysample_level_instance.py'
+          $report=Join-Path $env:GITHUB_WORKSPACE 'skarvik-city-load-after-plugin-enable.json'
+          $env:SKARVIK_CITY_AUDIT_REPORT=$report
+          & $editor $project "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path $report)){throw "UE5 failed to write audit JSON (exit $code)"}
+          $r=Get-Content $report -Raw|ConvertFrom-Json
+          Write-Host ("SKARVIK_DLL_FIX_NATIVE_AUDIT_STATUS="+$r.status)
+          Write-Host ("SKARVIK_DLL_FIX_NATIVE_AUDIT_ERROR="+$r.error)
+          Write-Host ("SKARVIK_DLL_FIX_NATIVE_AUDIT_EXIT="+$code)
+          if($code -ne 0 -or $r.status -ne 'BIG_CITY_UWORLD_LOADABLE_LEVEL_INSTANCE_API_AVAILABLE_NOT_INTEGRATED'){throw 'Native Big City level failed to load with all installed engine dependencies enabled'}
+          Write-Host 'SKARVIK_DLL_FIX_BIG_CITY_UWORLD_LOADED_SUCCESSFULLY=true'
+          Write-Host 'SKARVIK_CITY_INSTANCE_AND_GAMEPLAY_STILL_PENDING=true'
+      - name: Automatically restore the original staged project descriptor if native load test failed
+        if: failure()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $backup=Join-Path $root 'Saved\SkarvikCity\pre-optional-plugins-ueproject.json'
+          if(Test-Path $backup){
+            Copy-Item -LiteralPath $backup -Destination (Join-Path $root 'AnomaliaZPrigimalia.uproject') -Force
+            Write-Host 'SKARVIK_DLL_FIX_STAGE_DESCRIPTOR_ROLLBACK_SUCCESS=true'
+          }
+          Write-Host 'SKARVIK_DLL_FIX_ORIGINAL_PROJECT_D_NOT_MODIFIED=true'
+      - name: Attach native validation report only, never copy licensed content to GitHub
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skarvik-city-native-module-load-diagnostic
+          if-no-files-found: warn
+          path: skarvik-city-load-after-plugin-enable.json

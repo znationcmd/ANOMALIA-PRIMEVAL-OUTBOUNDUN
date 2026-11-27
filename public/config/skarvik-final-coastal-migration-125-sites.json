@@ -1,0 +1,3298 @@
+{
+  "schemaVersion": 1,
+  "world": "SKARVIK",
+  "destinationWorld": "/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1",
+  "sourceWorlds": [
+    "/Game/Maps/PRIGIMALIA_SKARVIK_GRADED_v2",
+    "/Game/Maps/PRIGIMALIA_SKARVIK_ISLANDS_v1"
+  ],
+  "originalC2026WorldsNeverOverwritten": true,
+  "coastalModel": "AnomaliaZPrigimaliaArchipelago::CoastDistance",
+  "worldSideKm": 48,
+  "originalSettlementCount": 125,
+  "originalOffshoreSettlements": 14,
+  "sourceMainlandDryCenters": 44,
+  "wetCentersRequiringRelocation": 67,
+  "unapprovedRelocationsRequireVisualReview": 67,
+  "maxRelocationDistanceKm": 13.5,
+  "futureMainlandNativeSourceBuildings": 1039,
+  "existingOriginalNativeIslandBuildingCores": 128,
+  "existingFourCitySampleDistrictMeshCount": 720,
+  "existingRegionalAndLocalRoadMeshCount": 14798,
+  "sourceTerrainCopyNotDirectlyOverwritten": true,
+  "allNativeCityRoadMigrationDone": false,
+  "finalSM5PlayableVerified": false,
+  "sourceMasterplan": "public/config/skarvik-world-layout-48km.json",
+  "sourceIslandMap": "public/config/skarvik-island-migration-v1.json",
+  "coastlinePreservationRule": "CoastDistance<=100m never edited by settlement grading, including underwater coastline",
+  "relocationPolicy": "67 provisional nearest mainland dry site centers; preserve names and exact old positions in sourceKm; do not delete old world or actors; full 3D migration requires terrain/vehicle revalidation",
+  "roadsPolicy": "Never copy old asphalt through sea. Need inspect and regrade every source road segment in final world before building.",
+  "requiredMilestones": [
+    "create 48km final coastal graded landscape on isolated map",
+    "migrate 128 island houses, rebase height on final pads",
+    "migrate dry mainland graded 3D buildings and site names",
+    "relocate 67 old wet sites with real original building meshes",
+    "migrate four City Sample sector meshes on final city pad",
+    "replan on-land regional roads, town streets, ferry lines",
+    "verify persistence, collision, water, PIE/SM5 game and multiplayer"
+  ],
+  "sites": [
+    {
+      "id": "citysample",
+      "name": "SKARVIK-CENTRE",
+      "settlementClass": "major-city",
+      "sourceKm": [
+        2,
+        -8
+      ],
+      "targetKm": [
+        2,
+        -8
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 8109.8,
+      "originalFootprintKm": [
+        4,
+        4
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 2000,
+      "siteTerrainBlendM": 425
+    },
+    {
+      "id": "frostgard",
+      "name": "FROSTGARD",
+      "settlementClass": "major-city",
+      "sourceKm": [
+        14,
+        15
+      ],
+      "targetKm": [
+        14,
+        15
+      ],
+      "targetLandmass": "source-original-offshore-island",
+      "hasExistingIslandNativeCore": true,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 2176.8,
+      "originalFootprintKm": [
+        3,
+        3
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 230,
+      "siteTerrainBlendM": 300
+    },
+    {
+      "id": "valdoren",
+      "name": "VALDOREN",
+      "settlementClass": "major-city",
+      "sourceKm": [
+        13,
+        1
+      ],
+      "targetKm": [
+        12.402,
+        0.548
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 0.75,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 394.1,
+      "originalFootprintKm": [
+        2.6,
+        2.6
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 230,
+      "siteTerrainBlendM": 300
+    },
+    {
+      "id": "sylvane",
+      "name": "SYLVANE",
+      "settlementClass": "town",
+      "sourceKm": [
+        -5,
+        4
+      ],
+      "targetKm": [
+        -5,
+        4
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 1353.8,
+      "originalFootprintKm": [
+        1.2,
+        1.2
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "kaelm",
+      "name": "KAELM",
+      "settlementClass": "town",
+      "sourceKm": [
+        -16,
+        7
+      ],
+      "targetKm": [
+        -16,
+        7
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 1668.4,
+      "originalFootprintKm": [
+        1,
+        1
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "oasis",
+      "name": "OASIS DE VAR",
+      "settlementClass": "village",
+      "sourceKm": [
+        -17,
+        -13
+      ],
+      "targetKm": [
+        -15.556,
+        -11.617
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 2,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 330.1,
+      "originalFootprintKm": [
+        0.55,
+        0.55
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "dunes",
+      "name": "DUNES DE RAV",
+      "settlementClass": "village",
+      "sourceKm": [
+        -12,
+        -19
+      ],
+      "targetKm": [
+        -13.338,
+        -12.895
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 6.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 467.6,
+      "originalFootprintKm": [
+        0.5,
+        0.5
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "redridge",
+      "name": "ROCHE ROUGE",
+      "settlementClass": "town",
+      "sourceKm": [
+        -9,
+        -10
+      ],
+      "targetKm": [
+        -9,
+        -10
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 3080.3,
+      "originalFootprintKm": [
+        1.1,
+        1.1
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "firvale",
+      "name": "VAL DES SAPINS",
+      "settlementClass": "village",
+      "sourceKm": [
+        -5,
+        -4
+      ],
+      "targetKm": [
+        -5,
+        -4
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 5591.9,
+      "originalFootprintKm": [
+        0.5,
+        0.5
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "birch",
+      "name": "BOIS-BLANC",
+      "settlementClass": "village",
+      "sourceKm": [
+        5,
+        5
+      ],
+      "targetKm": [
+        4.709,
+        3.529
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 1.5,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 262.5,
+      "originalFootprintKm": [
+        0.55,
+        0.55
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "highpass",
+      "name": "COL DES AIGLES",
+      "settlementClass": "village",
+      "sourceKm": [
+        -14,
+        17
+      ],
+      "targetKm": [
+        -14,
+        17
+      ],
+      "targetLandmass": "source-original-offshore-island",
+      "hasExistingIslandNativeCore": true,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 343.2,
+      "originalFootprintKm": [
+        0.5,
+        0.5
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "snowpine",
+      "name": "PIN-NORD",
+      "settlementClass": "village",
+      "sourceKm": [
+        7,
+        19
+      ],
+      "targetKm": [
+        7,
+        19
+      ],
+      "targetLandmass": "source-original-offshore-island",
+      "hasExistingIslandNativeCore": true,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 356.2,
+      "originalFootprintKm": [
+        0.5,
+        0.5
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "icehaven",
+      "name": "HAVRE-BLANC",
+      "settlementClass": "town",
+      "sourceKm": [
+        20,
+        12
+      ],
+      "targetKm": [
+        8.97,
+        8.745
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 11.5,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 311.5,
+      "originalFootprintKm": [
+        0.9,
+        0.9
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "northhamlet",
+      "name": "HAMEAU DU LAC GELÉ",
+      "settlementClass": "village",
+      "sourceKm": [
+        2,
+        14
+      ],
+      "targetKm": [
+        2,
+        14
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 1004.8,
+      "originalFootprintKm": [
+        0.5,
+        0.5
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "harbor",
+      "name": "PORT ELIAS",
+      "settlementClass": "town",
+      "sourceKm": [
+        18,
+        -13
+      ],
+      "targetKm": [
+        18,
+        -13
+      ],
+      "targetLandmass": "source-original-offshore-island",
+      "hasExistingIslandNativeCore": true,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 797.6,
+      "originalFootprintKm": [
+        1.1,
+        1.1
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "southwood",
+      "name": "SAINTE-ORÉE",
+      "settlementClass": "village",
+      "sourceKm": [
+        3,
+        -19
+      ],
+      "targetKm": [
+        3.873,
+        -14.586
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 4.5,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 582.5,
+      "originalFootprintKm": [
+        0.55,
+        0.55
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "river",
+      "name": "RIVECLAIRe",
+      "settlementClass": "village",
+      "sourceKm": [
+        -10,
+        -1
+      ],
+      "targetKm": [
+        -10,
+        -1
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 2307.7,
+      "originalFootprintKm": [
+        0.55,
+        0.55
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "ravenor",
+      "name": "RAVENOR",
+      "settlementClass": "major-city",
+      "sourceKm": [
+        -19,
+        -17
+      ],
+      "targetKm": [
+        -14.289,
+        -12.892
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 6.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 398.8,
+      "originalFootprintKm": [
+        2.3,
+        2.3
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 230,
+      "siteTerrainBlendM": 300
+    },
+    {
+      "id": "karstheim",
+      "name": "KARSTHEIM",
+      "settlementClass": "major-city",
+      "sourceKm": [
+        -18,
+        4
+      ],
+      "targetKm": [
+        -17.759,
+        4.438
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 0.5,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 389.5,
+      "originalFootprintKm": [
+        2.3,
+        2.3
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 230,
+      "siteTerrainBlendM": 300
+    },
+    {
+      "id": "varengard",
+      "name": "VARENGARD",
+      "settlementClass": "major-city",
+      "sourceKm": [
+        -17,
+        17
+      ],
+      "targetKm": [
+        -17,
+        17
+      ],
+      "targetLandmass": "source-original-offshore-island",
+      "hasExistingIslandNativeCore": true,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 2110.9,
+      "originalFootprintKm": [
+        2.3,
+        2.3
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 230,
+      "siteTerrainBlendM": 300
+    },
+    {
+      "id": "eldervik",
+      "name": "ELDERVIK",
+      "settlementClass": "major-city",
+      "sourceKm": [
+        -2,
+        7
+      ],
+      "targetKm": [
+        -2,
+        7
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 1760.2,
+      "originalFootprintKm": [
+        2.5,
+        2.5
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 230,
+      "siteTerrainBlendM": 300
+    },
+    {
+      "id": "nordfjell",
+      "name": "NORDFJELL",
+      "settlementClass": "major-city",
+      "sourceKm": [
+        -1,
+        20
+      ],
+      "targetKm": [
+        0.318,
+        14.918
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 5.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 404.3,
+      "originalFootprintKm": [
+        2.5,
+        2.5
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 230,
+      "siteTerrainBlendM": 300
+    },
+    {
+      "id": "astermont",
+      "name": "ASTERMONT",
+      "settlementClass": "major-city",
+      "sourceKm": [
+        19,
+        -5
+      ],
+      "targetKm": [
+        14.018,
+        -4.579
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 5,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 520.1,
+      "originalFootprintKm": [
+        2.5,
+        2.5
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 230,
+      "siteTerrainBlendM": 300
+    },
+    {
+      "id": "meridia",
+      "name": "MERIDIA",
+      "settlementClass": "major-city",
+      "sourceKm": [
+        5,
+        -21
+      ],
+      "targetKm": [
+        5.322,
+        -14.758
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 6.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 435.5,
+      "originalFootprintKm": [
+        2.4,
+        2.4
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 230,
+      "siteTerrainBlendM": 300
+    },
+    {
+      "id": "tarzel",
+      "name": "TARZEL",
+      "settlementClass": "small-town",
+      "sourceKm": [
+        -15,
+        -8
+      ],
+      "targetKm": [
+        -15,
+        -8
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 2717.2,
+      "originalFootprintKm": [
+        1.2,
+        1.2
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 145,
+      "siteTerrainBlendM": 185
+    },
+    {
+      "id": "brumecrete",
+      "name": "BRUMECRÊTE",
+      "settlementClass": "small-town",
+      "sourceKm": [
+        -22,
+        9
+      ],
+      "targetKm": [
+        -18.573,
+        5.711
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 4.75,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 344.8,
+      "originalFootprintKm": [
+        1.2,
+        1.2
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 145,
+      "siteTerrainBlendM": 185
+    },
+    {
+      "id": "montbrume",
+      "name": "MONTBRUME",
+      "settlementClass": "small-town",
+      "sourceKm": [
+        4,
+        0
+      ],
+      "targetKm": [
+        4,
+        0
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 3818.8,
+      "originalFootprintKm": [
+        1.2,
+        1.2
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 145,
+      "siteTerrainBlendM": 185
+    },
+    {
+      "id": "hiverdal",
+      "name": "HIVERDAL",
+      "settlementClass": "small-town",
+      "sourceKm": [
+        8,
+        13
+      ],
+      "targetKm": [
+        6.384,
+        11.092
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 2.5,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 313.3,
+      "originalFootprintKm": [
+        1.2,
+        1.2
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 145,
+      "siteTerrainBlendM": 185
+    },
+    {
+      "id": "rosephare",
+      "name": "ROSEPHARE",
+      "settlementClass": "small-town",
+      "sourceKm": [
+        21,
+        -14
+      ],
+      "targetKm": [
+        13.824,
+        -9.444
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 8.5,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 368.9,
+      "originalFootprintKm": [
+        1.2,
+        1.2
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 145,
+      "siteTerrainBlendM": 185
+    },
+    {
+      "id": "bois-sud",
+      "name": "BOIS-SUD",
+      "settlementClass": "small-town",
+      "sourceKm": [
+        -3,
+        -19
+      ],
+      "targetKm": [
+        -3,
+        -19
+      ],
+      "targetLandmass": "source-original-offshore-island",
+      "hasExistingIslandNativeCore": true,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 590.8,
+      "originalFootprintKm": [
+        1.2,
+        1.2
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 145,
+      "siteTerrainBlendM": 185
+    },
+    {
+      "id": "kharvel",
+      "name": "KHARVEL",
+      "settlementClass": "town",
+      "sourceKm": [
+        -15.68,
+        -19.35
+      ],
+      "targetKm": [
+        -12.9,
+        -12.654
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 7.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 527.5,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "sablecroix",
+      "name": "SABLECROIX",
+      "settlementClass": "town",
+      "sourceKm": [
+        -16.93,
+        -14.42
+      ],
+      "targetKm": [
+        -15.074,
+        -12.063
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 3,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 301.4,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "miraze",
+      "name": "MIRAZE",
+      "settlementClass": "town",
+      "sourceKm": [
+        -13.75,
+        -16.14
+      ],
+      "targetKm": [
+        -12.365,
+        -12.387
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 4,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 443.2,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "pierremont",
+      "name": "PIERREMONT",
+      "settlementClass": "town",
+      "sourceKm": [
+        -9.38,
+        4.36
+      ],
+      "targetKm": [
+        -9.38,
+        4.36
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 947.4,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "cimefonte",
+      "name": "CIMEFONTE",
+      "settlementClass": "town",
+      "sourceKm": [
+        -17.25,
+        8.53
+      ],
+      "targetKm": [
+        -16.855,
+        8.223
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 0.5,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 273.8,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "valleroche",
+      "name": "VALLEROCHE",
+      "settlementClass": "town",
+      "sourceKm": [
+        -17.73,
+        -1.94
+      ],
+      "targetKm": [
+        -14.98,
+        -1.905
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 2.75,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 352.3,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "boissauvage",
+      "name": "BOISSAUVAGE",
+      "settlementClass": "town",
+      "sourceKm": [
+        4.02,
+        7.94
+      ],
+      "targetKm": [
+        4.02,
+        7.94
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 845.9,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "clairvallon",
+      "name": "CLAIRVALLON",
+      "settlementClass": "town",
+      "sourceKm": [
+        6.34,
+        -2.44
+      ],
+      "targetKm": [
+        6.34,
+        -2.44
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 5264,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "montoree",
+      "name": "MONTORÉE",
+      "settlementClass": "town",
+      "sourceKm": [
+        5.45,
+        3.62
+      ],
+      "targetKm": [
+        5.327,
+        3.402
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 0.25,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 270,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "valrivage",
+      "name": "VALRIVAGE",
+      "settlementClass": "town",
+      "sourceKm": [
+        -6.24,
+        2.37
+      ],
+      "targetKm": [
+        -6.24,
+        2.37
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 944.7,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "glacelac",
+      "name": "GLACELAC",
+      "settlementClass": "town",
+      "sourceKm": [
+        8.57,
+        18.09
+      ],
+      "targetKm": [
+        2.063,
+        14.893
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 7.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 299.1,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "nivergard",
+      "name": "NIVERGARD",
+      "settlementClass": "town",
+      "sourceKm": [
+        16.63,
+        12.62
+      ],
+      "targetKm": [
+        16.63,
+        12.62
+      ],
+      "targetLandmass": "source-original-offshore-island",
+      "hasExistingIslandNativeCore": true,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 690.9,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "lysvik",
+      "name": "LYSVIK",
+      "settlementClass": "town",
+      "sourceKm": [
+        15.76,
+        20.09
+      ],
+      "targetKm": [
+        7.552,
+        10.662
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 12.5,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 279,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "baie-argent",
+      "name": "BAIE-ARGENT",
+      "settlementClass": "town",
+      "sourceKm": [
+        16.34,
+        -2.2
+      ],
+      "targetKm": [
+        13.702,
+        -1.423
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 2.75,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 285.7,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "hauterive",
+      "name": "HAUTERIVE",
+      "settlementClass": "town",
+      "sourceKm": [
+        10.97,
+        -7.15
+      ],
+      "targetKm": [
+        10.97,
+        -7.15
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 3396.9,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "coteverte",
+      "name": "CÔTEVERTE",
+      "settlementClass": "town",
+      "sourceKm": [
+        11.57,
+        -10.76
+      ],
+      "targetKm": [
+        11.57,
+        -10.36
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 817,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160,
+      "coastalInlandAdjustmentKm": 0.4,
+      "adjustmentRationale": "Original coast centre only 178m inland; one test found an 80m building pad traversed original beach. Shift town 400m inland with 800m coast clearance."
+    },
+    {
+      "id": "port-azur",
+      "name": "PORT-AZUR",
+      "settlementClass": "town",
+      "sourceKm": [
+        20.47,
+        -1.68
+      ],
+      "targetKm": [
+        13.574,
+        -0.48
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 7,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 402.8,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "pont-vert",
+      "name": "PONT-VERT",
+      "settlementClass": "town",
+      "sourceKm": [
+        4.18,
+        -14.89
+      ],
+      "targetKm": [
+        4.18,
+        -14.89
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 414.4,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "merivals",
+      "name": "MÉRIVALS",
+      "settlementClass": "town",
+      "sourceKm": [
+        -4.92,
+        -14.61
+      ],
+      "targetKm": [
+        -4.212,
+        -13.58
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 1.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 304.6,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "cendreval",
+      "name": "CENDREVAL",
+      "settlementClass": "town",
+      "sourceKm": [
+        -3.42,
+        -16.81
+      ],
+      "targetKm": [
+        -2.122,
+        -14.673
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 2.5,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 333.1,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "bas-moulin",
+      "name": "BAS-MOULIN",
+      "settlementClass": "town",
+      "sourceKm": [
+        0.96,
+        -18.57
+      ],
+      "targetKm": [
+        0.729,
+        -14.827
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 3.75,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 281.7,
+      "originalFootprintKm": [
+        0.95,
+        0.95
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 125,
+      "siteTerrainBlendM": 160
+    },
+    {
+      "id": "khemir",
+      "name": "KHEMIR",
+      "settlementClass": "village",
+      "sourceKm": [
+        -9.63,
+        -17.73
+      ],
+      "targetKm": [
+        -7.479,
+        -12.941
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 5.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 311.9,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "sable-froid",
+      "name": "SABLE-FROID",
+      "settlementClass": "village",
+      "sourceKm": [
+        -13.99,
+        -19.3
+      ],
+      "targetKm": [
+        -13.308,
+        -12.333
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 7,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 1164.3,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "ergued",
+      "name": "ERGUED",
+      "settlementClass": "village",
+      "sourceKm": [
+        -20.4,
+        -8.78
+      ],
+      "targetKm": [
+        -17.65,
+        -8.745
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 2.75,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 354.4,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "dunevoile",
+      "name": "DUNEVOILE",
+      "settlementClass": "village",
+      "sourceKm": [
+        -18.35,
+        -14.87
+      ],
+      "targetKm": [
+        -18.35,
+        -14.87
+      ],
+      "targetLandmass": "source-original-offshore-island",
+      "hasExistingIslandNativeCore": true,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 470.6,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "almari",
+      "name": "ALMARI",
+      "settlementClass": "village",
+      "sourceKm": [
+        -18.95,
+        -13.47
+      ],
+      "targetKm": [
+        -18.95,
+        -13.47
+      ],
+      "targetLandmass": "source-original-offshore-island",
+      "hasExistingIslandNativeCore": true,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 1362.9,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "rocheseche",
+      "name": "ROCHESÈCHE",
+      "settlementClass": "village",
+      "sourceKm": [
+        -19.01,
+        -7.34
+      ],
+      "targetKm": [
+        -17.507,
+        -8.237
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 1.75,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 428.6,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "elzar",
+      "name": "ELZAR",
+      "settlementClass": "village",
+      "sourceKm": [
+        -19.57,
+        -12.71
+      ],
+      "targetKm": [
+        -19.57,
+        -12.71
+      ],
+      "targetLandmass": "source-original-offshore-island",
+      "hasExistingIslandNativeCore": true,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 503.8,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "qarven",
+      "name": "QARVEN",
+      "settlementClass": "village",
+      "sourceKm": [
+        -9.93,
+        -16.86
+      ],
+      "targetKm": [
+        -8.261,
+        -12.681
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 4.5,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 284.4,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "safran",
+      "name": "SAFRAN",
+      "settlementClass": "village",
+      "sourceKm": [
+        -9.81,
+        -8.06
+      ],
+      "targetKm": [
+        -9.81,
+        -8.06
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 5464.2,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "solaroc",
+      "name": "SOLAROC",
+      "settlementClass": "village",
+      "sourceKm": [
+        -12.88,
+        -7.43
+      ],
+      "targetKm": [
+        -12.88,
+        -7.43
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 3631.8,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "tinjar",
+      "name": "TINJAR",
+      "settlementClass": "village",
+      "sourceKm": [
+        -9.72,
+        -15.45
+      ],
+      "targetKm": [
+        -7.843,
+        -12.797
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 3.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 283.3,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "arbelin",
+      "name": "ARBELIN",
+      "settlementClass": "village",
+      "sourceKm": [
+        -18.54,
+        -10.37
+      ],
+      "targetKm": [
+        -16.931,
+        -9.682
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 1.75,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 315.9,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "desert",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "brumepierre",
+      "name": "BRUMEPIERRE",
+      "settlementClass": "village",
+      "sourceKm": [
+        -14.34,
+        14.29
+      ],
+      "targetKm": [
+        -13.101,
+        14.126
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 1.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 367,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "rochenord",
+      "name": "ROCHENORD",
+      "settlementClass": "village",
+      "sourceKm": [
+        -19.09,
+        18.05
+      ],
+      "targetKm": [
+        -19.09,
+        18.05
+      ],
+      "targetLandmass": "source-original-offshore-island",
+      "hasExistingIslandNativeCore": true,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 575.2,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "vieux-col",
+      "name": "VIEUX-COL",
+      "settlementClass": "village",
+      "sourceKm": [
+        -16.47,
+        21.05
+      ],
+      "targetKm": [
+        -12.231,
+        15.479
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 7,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 393.3,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "aiguille-haute",
+      "name": "AIGUILLE-HAUTE",
+      "settlementClass": "village",
+      "sourceKm": [
+        -20.16,
+        -1.88
+      ],
+      "targetKm": [
+        -15.199,
+        -1.256
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 5,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 260.6,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "ravin-dore",
+      "name": "RAVIN-DORÉ",
+      "settlementClass": "village",
+      "sourceKm": [
+        -19.36,
+        12.52
+      ],
+      "targetKm": [
+        -16.208,
+        10.489
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 3.75,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 260.2,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "sombreroch",
+      "name": "SOMBREROCH",
+      "settlementClass": "village",
+      "sourceKm": [
+        -20.72,
+        0.68
+      ],
+      "targetKm": [
+        -18.672,
+        4.687
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 4.5,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 378.4,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "melezac",
+      "name": "MÉLÈZAC",
+      "settlementClass": "village",
+      "sourceKm": [
+        -16.12,
+        5.55
+      ],
+      "targetKm": [
+        -16.12,
+        5.55
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 1467.7,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "pierrefeu",
+      "name": "PIERREFEU",
+      "settlementClass": "village",
+      "sourceKm": [
+        -21.03,
+        -1.8
+      ],
+      "targetKm": [
+        -15.102,
+        -0.873
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 6,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 391.4,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "granitel",
+      "name": "GRANITEL",
+      "settlementClass": "village",
+      "sourceKm": [
+        -13.64,
+        19.25
+      ],
+      "targetKm": [
+        -12.018,
+        15.869
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 3.75,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 289.2,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "fonteval",
+      "name": "FONTEVAL",
+      "settlementClass": "village",
+      "sourceKm": [
+        -14.82,
+        5.11
+      ],
+      "targetKm": [
+        -14.82,
+        5.11
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 1029.4,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "cairn-bas",
+      "name": "CAIRN-BAS",
+      "settlementClass": "village",
+      "sourceKm": [
+        -17.87,
+        19.08
+      ],
+      "targetKm": [
+        -17.85,
+        18.75
+      ],
+      "targetLandmass": "source-original-offshore-island",
+      "hasExistingIslandNativeCore": true,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 573.1,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130,
+      "coastalInlandAdjustmentKm": 0.33,
+      "adjustmentRationale": "Source island town center only 142m inside shoreline, not 80m-grade-safe. Move core 330m inland on same island without creating new land or touching source world."
+    },
+    {
+      "id": "lauzeveil",
+      "name": "LAUZEVEIL",
+      "settlementClass": "village",
+      "sourceKm": [
+        -18.58,
+        20.08
+      ],
+      "targetKm": [
+        -12.794,
+        14.556
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 8,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 418.5,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "western_alps",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "fresnelac",
+      "name": "FRESNELAC",
+      "settlementClass": "village",
+      "sourceKm": [
+        6.93,
+        -7.94
+      ],
+      "targetKm": [
+        6.93,
+        -7.94
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 4457.6,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "orme-bas",
+      "name": "ORME-BAS",
+      "settlementClass": "village",
+      "sourceKm": [
+        4.53,
+        -5
+      ],
+      "targetKm": [
+        4.53,
+        -5
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 7763.3,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "charmeval",
+      "name": "CHARMEVAL",
+      "settlementClass": "village",
+      "sourceKm": [
+        -7.01,
+        -1.22
+      ],
+      "targetKm": [
+        -7.01,
+        -1.22
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 2894.7,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "rosemosse",
+      "name": "ROSEMOSSE",
+      "settlementClass": "village",
+      "sourceKm": [
+        -6.59,
+        -8.65
+      ],
+      "targetKm": [
+        -6.59,
+        -8.65
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 4410.2,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "vieux-chene",
+      "name": "VIEUX-CHÊNE",
+      "settlementClass": "village",
+      "sourceKm": [
+        -7.66,
+        -9.32
+      ],
+      "targetKm": [
+        -7.66,
+        -9.32
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 3182.8,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "millefeuille",
+      "name": "MILLEFEUILLE",
+      "settlementClass": "village",
+      "sourceKm": [
+        -1.6,
+        -8.61
+      ],
+      "targetKm": [
+        -1.6,
+        -8.61
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 4031,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "boisdore",
+      "name": "BOISDORÉ",
+      "settlementClass": "village",
+      "sourceKm": [
+        6.41,
+        4.81
+      ],
+      "targetKm": [
+        5.759,
+        3.186
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 1.75,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 413.1,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "longpont",
+      "name": "LONGPONT",
+      "settlementClass": "village",
+      "sourceKm": [
+        -7.26,
+        5.91
+      ],
+      "targetKm": [
+        -7.26,
+        5.91
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 2430.8,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "fontaine-verte",
+      "name": "FONTAINE-VERTE",
+      "settlementClass": "village",
+      "sourceKm": [
+        7.78,
+        -8.36
+      ],
+      "targetKm": [
+        7.78,
+        -8.36
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 3964.1,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "hautes-rives",
+      "name": "HAUTES-RIVES",
+      "settlementClass": "village",
+      "sourceKm": [
+        -0.71,
+        -0.8
+      ],
+      "targetKm": [
+        -0.71,
+        -0.8
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 3712.4,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "epicea",
+      "name": "ÉPICÉA",
+      "settlementClass": "village",
+      "sourceKm": [
+        -8.7,
+        2.36
+      ],
+      "targetKm": [
+        -8.7,
+        2.36
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 313.6,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "valleron",
+      "name": "VALLERON",
+      "settlementClass": "village",
+      "sourceKm": [
+        1.18,
+        -3.12
+      ],
+      "targetKm": [
+        1.18,
+        -3.12
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 5695.4,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "forest",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "neigerive",
+      "name": "NEIGERIVE",
+      "settlementClass": "village",
+      "sourceKm": [
+        21.99,
+        12.15
+      ],
+      "targetKm": [
+        9.08,
+        8.203
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 13.5,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 404.4,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "froidepin",
+      "name": "FROIDEPIN",
+      "settlementClass": "village",
+      "sourceKm": [
+        12.49,
+        18.88
+      ],
+      "targetKm": [
+        7.884,
+        10.286
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 9.75,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 394.1,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "osterlac",
+      "name": "OSTERLAC",
+      "settlementClass": "village",
+      "sourceKm": [
+        20.03,
+        13.88
+      ],
+      "targetKm": [
+        8.512,
+        9.709
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 12.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 293.6,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "glacier-bas",
+      "name": "GLACIER-BAS",
+      "settlementClass": "village",
+      "sourceKm": [
+        -4.56,
+        11.29
+      ],
+      "targetKm": [
+        -4.56,
+        11.29
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 3201.4,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "niveore",
+      "name": "NIVEORE",
+      "settlementClass": "village",
+      "sourceKm": [
+        0.23,
+        10.88
+      ],
+      "targetKm": [
+        0.23,
+        10.88
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 3872.4,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "lysglace",
+      "name": "LYSGLACE",
+      "settlementClass": "village",
+      "sourceKm": [
+        2.89,
+        10.94
+      ],
+      "targetKm": [
+        2.89,
+        10.94
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 1625.9,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "fjordin",
+      "name": "FJORDIN",
+      "settlementClass": "village",
+      "sourceKm": [
+        9.78,
+        12.77
+      ],
+      "targetKm": [
+        7.163,
+        10.843
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 3.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 297.8,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "blanchecrete",
+      "name": "BLANCHECRÊTE",
+      "settlementClass": "village",
+      "sourceKm": [
+        15.7,
+        11.2
+      ],
+      "targetKm": [
+        15.7,
+        11.2
+      ],
+      "targetLandmass": "source-original-offshore-island",
+      "hasExistingIslandNativeCore": true,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 437,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "eiskorn",
+      "name": "EISKORN",
+      "settlementClass": "village",
+      "sourceKm": [
+        -0.11,
+        12.49
+      ],
+      "targetKm": [
+        -0.11,
+        12.49
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 3008.6,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "frostel",
+      "name": "FROSTEL",
+      "settlementClass": "village",
+      "sourceKm": [
+        18.84,
+        13.43
+      ],
+      "targetKm": [
+        8.718,
+        9.123
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 11,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 392.4,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "nordlac",
+      "name": "NORDLAC",
+      "settlementClass": "village",
+      "sourceKm": [
+        2.07,
+        10.48
+      ],
+      "targetKm": [
+        2.07,
+        10.48
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 2557.1,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "snow",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "malphare",
+      "name": "MALPHARE",
+      "settlementClass": "village",
+      "sourceKm": [
+        16,
+        6.14
+      ],
+      "targetKm": [
+        9.812,
+        3.443
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 6.75,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 352.2,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "ardelport",
+      "name": "ARDELPORT",
+      "settlementClass": "village",
+      "sourceKm": [
+        9.9,
+        -5.93
+      ],
+      "targetKm": [
+        9.9,
+        -5.93
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 4529.1,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "capvive",
+      "name": "CAPVIVE",
+      "settlementClass": "village",
+      "sourceKm": [
+        11.59,
+        -8.64
+      ],
+      "targetKm": [
+        11.59,
+        -8.64
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 2747.2,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "plage-cendre",
+      "name": "PLAGE-CENDRE",
+      "settlementClass": "village",
+      "sourceKm": [
+        19.31,
+        1.6
+      ],
+      "targetKm": [
+        13.253,
+        0.058
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 6.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 423.3,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "cote-d-orval",
+      "name": "CÔTE-D'ORVAL",
+      "settlementClass": "village",
+      "sourceKm": [
+        18.41,
+        4.77
+      ],
+      "targetKm": [
+        13.089,
+        -0.516
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 7.5,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 876.4,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "sablemaree",
+      "name": "SABLEMARÉE",
+      "settlementClass": "village",
+      "sourceKm": [
+        13.39,
+        -2.9
+      ],
+      "targetKm": [
+        13.39,
+        -2.9
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 525.2,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "vauclerc",
+      "name": "VAUCLERC",
+      "settlementClass": "village",
+      "sourceKm": [
+        21.39,
+        -2.73
+      ],
+      "targetKm": [
+        13.651,
+        -3.14
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 7.75,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 325.6,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "etang-sale",
+      "name": "ÉTANG-SALÉ",
+      "settlementClass": "village",
+      "sourceKm": [
+        10.8,
+        -9.05
+      ],
+      "targetKm": [
+        10.8,
+        -9.05
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 2948.6,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "vieux-quai",
+      "name": "VIEUX-QUAI",
+      "settlementClass": "village",
+      "sourceKm": [
+        11.73,
+        -5.5
+      ],
+      "targetKm": [
+        11.73,
+        -5.5
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 2877.7,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "fonte-mer",
+      "name": "FONTE-MER",
+      "settlementClass": "village",
+      "sourceKm": [
+        18.53,
+        6.98
+      ],
+      "targetKm": [
+        13.683,
+        -0.899
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 9.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 345.6,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "elmarin",
+      "name": "ELMARIN",
+      "settlementClass": "village",
+      "sourceKm": [
+        14.32,
+        -10.13
+      ],
+      "targetKm": [
+        13.602,
+        -9.912
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 0.75,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 358.7,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "cap-aube",
+      "name": "CAP-AUBE",
+      "settlementClass": "village",
+      "sourceKm": [
+        18.59,
+        -8.89
+      ],
+      "targetKm": [
+        18.59,
+        -8.89
+      ],
+      "targetLandmass": "source-original-offshore-island",
+      "hasExistingIslandNativeCore": true,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 1281.9,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "valest",
+      "name": "VALEST",
+      "settlementClass": "village",
+      "sourceKm": [
+        15.33,
+        4.24
+      ],
+      "targetKm": [
+        13.011,
+        -0.19
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 5,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 779.1,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "east",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "auberive",
+      "name": "AUBERIVE",
+      "settlementClass": "village",
+      "sourceKm": [
+        6.14,
+        -16.73
+      ],
+      "targetKm": [
+        5.9,
+        -13.99
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 2.75,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 621.9,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "herbehaute",
+      "name": "HERBEHAUTE",
+      "settlementClass": "village",
+      "sourceKm": [
+        -3.24,
+        -21.56
+      ],
+      "targetKm": [
+        -1.117,
+        -15.153
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 6.75,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 306.6,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "sauleval",
+      "name": "SAULEVAL",
+      "settlementClass": "village",
+      "sourceKm": [
+        8.3,
+        -17.14
+      ],
+      "targetKm": [
+        6.438,
+        -13.6
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 4,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 388.4,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "merilac",
+      "name": "MÉRILAC",
+      "settlementClass": "village",
+      "sourceKm": [
+        -0.14,
+        -16.3
+      ],
+      "targetKm": [
+        0.024,
+        -15.061
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 1.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 338.7,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "boissain",
+      "name": "BOISSAIN",
+      "settlementClass": "village",
+      "sourceKm": [
+        6.3,
+        -14.82
+      ],
+      "targetKm": [
+        6.073,
+        -13.591
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 1.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 752.6,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "pont-d-oree",
+      "name": "PONT-D'ORÉE",
+      "settlementClass": "village",
+      "sourceKm": [
+        -4.39,
+        -21.72
+      ],
+      "targetKm": [
+        -1.61,
+        -15.024
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 7.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 272.3,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "grandpre",
+      "name": "GRANDPRÉ",
+      "settlementClass": "village",
+      "sourceKm": [
+        -0.26,
+        -20.7
+      ],
+      "targetKm": [
+        -0.357,
+        -15.201
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 5.5,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 276,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "corne-bois",
+      "name": "CORNE-BOIS",
+      "settlementClass": "village",
+      "sourceKm": [
+        -3.22,
+        -20.59
+      ],
+      "targetKm": [
+        -0.674,
+        -15.157
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 6,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 351.4,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "rive-basse",
+      "name": "RIVE-BASSE",
+      "settlementClass": "village",
+      "sourceKm": [
+        -1.02,
+        -22.37
+      ],
+      "targetKm": [
+        0.243,
+        -14.724
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 7.75,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 653.5,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "montbrun",
+      "name": "MONTBRUN",
+      "settlementClass": "village",
+      "sourceKm": [
+        -5.49,
+        -20.99
+      ],
+      "targetKm": [
+        -2.71,
+        -14.294
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 7.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 337.3,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "loupvallon",
+      "name": "LOUPVALLON",
+      "settlementClass": "village",
+      "sourceKm": [
+        -1.53,
+        -14.67
+      ],
+      "targetKm": [
+        -1.53,
+        -14.67
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 624.4,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "vermont",
+      "name": "VERMONT",
+      "settlementClass": "village",
+      "sourceKm": [
+        5.14,
+        -18.51
+      ],
+      "targetKm": [
+        4.451,
+        -14.316
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 4.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 1065,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "coulevie",
+      "name": "COULEVIE",
+      "settlementClass": "village",
+      "sourceKm": [
+        -0.08,
+        -14.7
+      ],
+      "targetKm": [
+        -0.08,
+        -14.7
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": false,
+      "relocationDistanceKm": 0,
+      "sourceDryLand": true,
+      "targetCoastDistanceM": 789.4,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    },
+    {
+      "id": "bellevigne",
+      "name": "BELLEVIGNE",
+      "settlementClass": "village",
+      "sourceKm": [
+        -1.67,
+        -15.82
+      ],
+      "targetKm": [
+        -0.962,
+        -14.79
+      ],
+      "targetLandmass": "original-mainland",
+      "hasExistingIslandNativeCore": false,
+      "relocated": true,
+      "relocationDistanceKm": 1.25,
+      "sourceDryLand": false,
+      "targetCoastDistanceM": 700.5,
+      "originalFootprintKm": [
+        0.42,
+        0.42
+      ],
+      "biome": "south",
+      "siteTerrainFlatHalfM": 90,
+      "siteTerrainBlendM": 130
+    }
+  ],
+  "sourceIslandDryCoastalInlandAdjustments": 1,
+  "finalReliefCorrectionStatus": "CI_SOURCE_COASTAL_TERRACE_INLAND_ADJUSTMENT_FOR_CAIRN_BAS",
+  "sourceMainlandCoastalInlandAdjustments": 1
+}

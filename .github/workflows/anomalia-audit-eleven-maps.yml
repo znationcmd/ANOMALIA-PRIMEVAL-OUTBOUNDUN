@@ -1,0 +1,49 @@
+name: ANOMALIA - verify 11 independent world maps and actual UE5 packages
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/anomalia-audit-eleven-maps.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-native-eleven-maps:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Check catalog has exactly eleven independent maps and inspect physical UE levels read-only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $config=Join-Path $env:GITHUB_WORKSPACE 'public\config\anomalia-map-catalog.json'
+          $data=Get-Content -LiteralPath $config -Raw|ConvertFrom-Json
+          $maps=@($data.maps)
+          if($maps.Count -ne 11 -or $data.mapCount -ne 11){throw 'Exactly 11 map records required'}
+          if(@($maps|ForEach-Object{$_.displayName}|Sort-Object -Unique).Count -ne 11){throw 'Duplicate world map names'}
+          foreach($m in $maps){
+            if($m.serverSelectable){throw "Do not select non-playtested map: $($m.displayName)"}
+            Write-Host ("ANOMALIA_ELEVEN_MAP name={0} package={1} validation={2}" -f $m.displayName,$m.originalUnrealPackage,$m.validation)
+          }
+          $roots=@(
+            'D:\ANOMALIA\unreal\Content\Maps',
+            'D:\ANOMALIAZ-PRIGIMALIA\unreal\Content\Maps',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\Maps'
+          )
+          foreach($dir in $roots){
+            Write-Host ("ANOMALIA_NATIVE_MAP_ROOT={0} exists={1}" -f $dir,(Test-Path -LiteralPath $dir -PathType Container))
+            if(Test-Path -LiteralPath $dir){
+              $list=@(Get-ChildItem -LiteralPath $dir -File -Filter '*.umap' -Recurse -ErrorAction Stop)
+              Write-Host ("ANOMALIA_NATIVE_UMAP_COUNT={0} root={1}" -f $list.Count,$dir)
+              foreach($f in ($list|Select-Object -First 50)){
+                Write-Host ("ANOMALIA_NATIVE_UMAP name={0} size={1} path={2}" -f $f.Name,$f.Length,$f.FullName)
+              }
+            }
+          }
+          Write-Host 'ANOMALIA_ELEVEN_NAMES_VERIFIED_NATIVE_PACKAGES_INVENTORIED=true'

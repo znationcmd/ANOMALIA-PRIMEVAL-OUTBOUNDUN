@@ -60,6 +60,7 @@ public:
     virtual TStatId GetStatId() const override;
     const FAnomaliaZPrigimaliaLootItem* FindItem(FName Id) const { return Items.Find(Id); }
     int32 GetCatalogSize() const { return Items.Num(); }
+    int32 GetRegisteredSpawnCount() const { return Spawns.Num(); }
     TArray<FName> GetItemIds() const { TArray<FName> Ids; Items.GetKeys(Ids); return Ids; }
     bool Configure(const FString& InServerId, const FString& InMapName, FString& Error);
     bool IsReady() const { return bReady; }
@@ -82,8 +83,10 @@ private:
     bool bConfigured = false, bReady = false;
     double DefaultRestock = 1800;
     float Accumulator = 0;
+    float BuildingDiscoveryAccumulator = 0.f;
     bool LoadCatalog(const FString& File, FString& Error, bool Append = false);
     bool RecoverPending(FString& Error);
     bool Persist(FString& Error);
     void SyncActors();
+    void DiscoverNearbyBuildingSpawns();
 };

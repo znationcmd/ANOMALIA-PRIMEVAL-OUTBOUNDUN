@@ -1,0 +1,63 @@
+name: SKARVIK - create verified native Unreal Editor desktop preview shortcut
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-create-verified-unreal-desktop-shortcut.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  safe-user-desktop-preview:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Create new clearly labelled SKARVIK Unreal Editor shortcut, never overwrite existing shortcuts
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          if(!(Test-Path $marker) -or (Get-Content $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted native stage'}
+          $project=Join-Path $stage 'AnomaliaZPrigimalia.uproject'
+          $map=Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'
+          if(!(Test-Path -LiteralPath $project) -or !(Test-Path -LiteralPath $map)){throw 'Original SKARVIK FINAL_v1 native world or stage project missing'}
+          $candidateRoots=@(
+            $env:UE_ROOT,
+            'C:\Program Files\Epic Games\UE_5.8',
+            'C:\Program Files\Epic Games\UE_5.8.3'
+          )
+          $editor=$null
+          foreach($root in $candidateRoots){
+            if(!$root){continue}
+            $exe=Join-Path $root 'Engine\Binaries\Win64\UnrealEditor.exe'
+            if(Test-Path -LiteralPath $exe){$editor=$exe;break}
+          }
+          if(!$editor){throw 'UnrealEditor.exe not found: cannot safely create shortcut'}
+          $desktop=[Environment]::GetFolderPath('Desktop')
+          if(!(Test-Path -LiteralPath $desktop)){throw 'Runner desktop not mounted'}
+          $shortcutPath=Join-Path $desktop 'ANOMALIAZ - SKARVIK FINAL (Unreal 5.8).lnk'
+          $shell=New-Object -ComObject WScript.Shell
+          if(Test-Path -LiteralPath $shortcutPath){
+            $prior=$shell.CreateShortcut($shortcutPath)
+            if($prior.TargetPath -ne $editor){throw 'A different shortcut already occupies destination; refusing overwrite'}
+          }
+          $shortcut=$shell.CreateShortcut($shortcutPath)
+          $shortcut.TargetPath=$editor
+          $shortcut.Arguments=('"'+$project+'" /Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1 -log')
+          $shortcut.WorkingDirectory=Split-Path $project -Parent
+          $shortcut.Description='Apercu SKARVIK FINAL 7 iles avec Unreal Editor. Ce raccourci ne lance PAS un jeu Win64 empaquete.'
+          $shortcut.Save()
+          $verify=$shell.CreateShortcut($shortcutPath)
+          if(!(Test-Path -LiteralPath $shortcutPath) -or $verify.TargetPath -ne $editor -or $verify.Arguments -notmatch 'PRIGIMALIA_SKARVIK_FINAL_v1'){throw 'Shortcut verification failed'}
+          Write-Host 'SKARVIK_NATIVE_PREVIEW_SHORTCUT_CREATED_AND_VERIFIED=true'
+          Write-Host ('SKARVIK_NATIVE_PREVIEW_SHORTCUT_NAME='+[IO.Path]::GetFileName($shortcutPath))
+          Write-Host 'SKARVIK_NATIVE_WINDOWS_GAME_EXE_BUILT=false'
+          Write-Host 'SKARVIK_DESKTOP_EXISTING_SHORTCUTS_UNCHANGED=true'
+          Write-Host 'SKARVIK_ORIGINAL_D_ANOMALIA_UNCHANGED=true'

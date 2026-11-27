@@ -1,0 +1,77 @@
+name: CITY SAMPLE - verifier fichiers essentiels du PC face au cloud
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/citysample-cloud-fingerprint-audit.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  fingerprint:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          clean: false
+      - name: Inventaire Windows relatif + empreintes des exemples uniquement, AUCUNE suppression
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Invalid original project marker'}
+          $sources=@(
+            'Content\City',
+            'Content\Map',
+            'Content\__ExternalActors__\Map\Big_City_LVL'
+          )
+          $out=@()
+          foreach($relative in $sources){
+            $path=Join-Path $root $relative
+            if(!(Test-Path -LiteralPath $path)){throw ('Missing critical City Sample source '+$relative)}
+            $files=@(Get-ChildItem -LiteralPath $path -Recurse -File -Force -ErrorAction Stop)
+            $size=[int64]0
+            foreach($f in $files){$size+=[int64]$f.Length}
+            $largest=@($files | Sort-Object Length -Descending | Select-Object -First 12)
+            $middle=@($files | Sort-Object FullName | Select-Object -Skip ([math]::Floor($files.Count/2)) -First 8)
+            $smallest=@($files | Sort-Object Length | Select-Object -First 4)
+            $examples=@($largest+$middle+$smallest | Select-Object -Unique)
+            $records=@(foreach($f in $examples){
+              $name=$f.FullName.Substring($root.Length+1).Replace('\','/')
+              [ordered]@{
+                relative=$name
+                filename=$f.Name
+                bytes=[int64]$f.Length
+                sha256=(Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash
+              }
+            })
+            $out+=@([ordered]@{
+              folder=$relative.Replace('\','/')
+              count=$files.Count
+              bytes=$size
+              averageBytes=[math]::Round($size/[math]::Max(1,$files.Count),0)
+              selectedExamples=$records
+            })
+            Write-Host ('CITY_SAMPLE_REAL_PC_FOLDER='+$relative+';COUNT='+$files.Count+';BYTES='+$size)
+          }
+          $report=[ordered]@{
+            schema='CITYSAMPLE_REAL_PC_CLOUD_COMPARISON_EXAMPLES_V1'
+            createdUTC=[DateTime]::UtcNow.ToString('o')
+            sourceRoot=$root
+            noFilesChangedOrDeleted=$true
+            projectSaveUntouched=$true
+            hashSampleOnly=$true
+            folders=$out
+          }
+          $report|ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'CITY_SAMPLE_PC_CLOUD_COMPARE_EXAMPLES.json') -Encoding UTF8
+          Write-Host 'CITY_SAMPLE_PC_FILE_FINGERPRINTS_DONE=true'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CITY-SAMPLE-REAL-PC-CLOUD-COMPARISON-EXAMPLES
+          path: CITY_SAMPLE_PC_CLOUD_COMPARE_EXAMPLES.json
+          if-no-files-found: error
+          retention-days: 30

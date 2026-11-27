@@ -1,0 +1,119 @@
+name: SKARVIK - reversibly disable 160 confirmed overlapping native regional B roads
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-final-reversible-overlaid-regional-asphalt-fix.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-reversible-collision-and-visibility-fix:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-final-real-regional-road-exact-duplicate-mesh-audit
+          run-id: 41316507845
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts/native-road-overlays
+      - name: Check exact native 160-mesh audit source and existing isolated map before any actor change
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){
+            throw 'Untrusted isolated native C stage'}
+          foreach($f in @('D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+              (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'),
+              (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+              (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap'),
+              (Join-Path $root 'Content\Map\Big_City_LVL.umap'))){
+            if(!(Test-Path -LiteralPath $f)){throw "Protected native map missing $f"}
+          }
+          if(Test-Path (Join-Path $root 'Saved\SkarvikCity\FinalRegionalExactDuplicateNonDestructiveSuppression20261101\final-before-disabling-exact-duplicate-B-road-meshes.umap')){
+            throw 'Native road overlap repair was attempted before. Refuse duplicate or overwrite.'
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){
+            throw 'An Unreal session is already active'}
+          $audit=Join-Path $env:GITHUB_WORKSPACE 'receipts\native-road-overlays\skarvik-final-native-confirmed-regional-asphalt-duplicates.json'
+          if(!(Test-Path -LiteralPath $audit)){throw 'No actual true duplicate mesh proof from previous independent audit'}
+          $r=Get-Content -LiteralPath $audit -Raw|ConvertFrom-Json
+          if($r.state -ne 'SKARVIK_FINAL_TWO_REGIONAL_PILOTS_REAL_DUPLICATE_MESHES_VERIFIED_READ_ONLY' -or
+             $r.exactSameMeshPathAndDirection -ne 160 -or
+             @($r.qualifiedBActorLabels).Count -ne 160 -or $r.nativeWorldMutated -ne $false){
+            throw '160 real original mesh source overlaps not authoritatively confirmed'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          if($free -lt 12){throw 'Insufficient stage C free disk space for safe snapshot'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          foreach($script in @('unreal\Scripts\reversibly_disable_skarvik_final_confirmed_regional_b_overlays.py',
+                               'unreal\Scripts\verify_skarvik_final_reversible_regional_overlays_after_reopen.py')){
+            & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE $script)
+            if($LASTEXITCODE -ne 0){throw "Native Python source syntax failed $script"}
+          }
+          Write-Host 'SKARVIK_FINAL_REVERSIBLE_EXACT_REGIONAL_OVERLAY_FIX_PREFLIGHT_VALID=true'
+      - name: Save restoration manifest then hide and disable collision only on exactly matching B road meshes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_FINAL_REGIONAL_ACTUAL_DUPLICATES_RECEIPT=Join-Path $env:GITHUB_WORKSPACE 'receipts\native-road-overlays\skarvik-final-native-confirmed-regional-asphalt-duplicates.json'
+          $env:SKARVIK_FINAL_REGIONAL_DEDUPLICATION_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-native-160-true-overlaid-B-asphalt-reversible-fix.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\reversibly_disable_skarvik_final_confirmed_regional_b_overlays.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_FINAL_REGIONAL_DEDUPLICATION_REPORT)){throw 'No native restoration and repair receipt'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_FINAL_REGIONAL_DEDUPLICATION_REPORT -Raw | ConvertFrom-Json
+          Write-Host ('SKARVIK_FINAL_NATIVE_REGIONAL_DUPLICATE_FIX_STATE='+$r.state)
+          Write-Host ('SKARVIK_FINAL_NATIVE_REGIONAL_B_ACTORS_SAFELY_DISABLED='+$r.disabledDuplicateBActors)
+          Write-Host ('SKARVIK_FINAL_NATIVE_REGIONAL_OLDER_A_ACTORS_PRESERVED='+$r.enabledOlderAActorsPreserved)
+          if($r.state -ne 'FINAL_NATIVE_160_CONFIRMED_OVERLAID_B_ROADS_HIDDEN_COLLISION_DISABLED_REVERSIBLE_NOT_DRIVEN' -or
+             $r.disabledDuplicateBActors -ne 160 -or $r.deletedRoadActors -ne 0 -or
+             $r.allOriginalMapsUnchanged -ne $true){
+            throw ('Cannot claim real native duplicate remediation: '+$r.error)
+          }
+          if($exit -ne 0){Write-Host ('SKARVIK_NATIVE_UE_AFTER_SAVED_REPAIR_SHUTDOWN_NONZERO='+$exit)}
+          Write-Host 'SKARVIK_FINAL_160_ROAD_B_MESHES_DISABLED_WITHOUT_DELETION=true'
+      - name: Independently reopen native World Partition and verify 160 hidden noncolliding actors with restoration record
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_FINAL_REPAIR_ORIGINAL_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-native-160-true-overlaid-B-asphalt-reversible-fix.json'
+          $env:SKARVIK_FINAL_REPAIR_INDEPENDENT_REOPEN=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-native-160-regional-B-asphalt-disabled-verified-reopen.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_final_reversible_regional_overlays_after_reopen.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_FINAL_REPAIR_INDEPENDENT_REOPEN)){throw 'No independent native 160-mesh repair verification receipt'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_FINAL_REPAIR_INDEPENDENT_REOPEN -Raw | ConvertFrom-Json
+          Write-Host ('SKARVIK_FINAL_NATIVE_ACTOR_FIX_VERIFICATION_STATE='+$r.state)
+          Write-Host ('SKARVIK_FINAL_NATIVE_B_ACTORS_DISABLED_PERSISTED='+$r.actualDisabledDuplicateBActorsReopened)
+          Write-Host ('SKARVIK_FINAL_NATIVE_B_ACTORS_STILL_SAVED='+$r.originalBActorsStillSaved)
+          if($r.state -ne 'FINAL_NATIVE_160_OVERLAID_B_ROADS_REVERSIBLY_DISABLED_AND_PERSISTED_AFTER_REOPEN' -or
+             $r.actualDisabledDuplicateBActorsReopened -ne 160 -or
+             $r.originalBActorsStillSaved -ne 992 -or $r.olderRegionalAActorsPreserved -ne 663 -or
+             $r.originalsUnchangedByAudit -ne $true){
+            throw ('160 overlap actor repair did not persist: '+$r.error)
+          }
+          if($exit -ne 0){Write-Host ('SKARVIK_NATIVE_UE_READONLY_SHUTDOWN_NONZERO='+$exit)}
+          Write-Host 'SKARVIK_FINAL_160_REAL_REGIONAL_DUPLICATE_ROAD_VISUAL_COLLISION_DISABLED_REOPEN_VERIFIED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-final-160-exact-duplicate-regional-road-meshes-reversible-fix
+          path: |
+            skarvik-final-native-160-true-overlaid-B-asphalt-reversible-fix.json
+            skarvik-final-native-160-regional-B-asphalt-disabled-verified-reopen.json
+          if-no-files-found: warn

@@ -1,5 +1,6 @@
 """Stage authoritative catalogue defaults for Unreal and packaged builds; never touch Saved."""
 from pathlib import Path
+import argparse
 import hashlib
 import json
 import os
@@ -9,8 +10,12 @@ ROOT = Path(__file__).resolve().parents[2]
 FILES = ('loot_items_catalog.json', 'loot_tiers.json', 'loot_spawns.json', 'rp_items_catalog.json', 'rp_economy.json')
 
 
-def stage(root=ROOT):
-    destination = root / 'unreal/Content/Anomalia/Data'
+def stage(root=ROOT, project_dir=None):
+    root = Path(root)
+    project = Path(project_dir) if project_dir is not None else root / 'unreal'
+    if project_dir is not None and not (project / 'AnomaliaZPrigimalia.uproject').is_file():
+        raise ValueError(f'Not an ANOMALIA Unreal project directory: {project}')
+    destination = project / 'Content/AnomaliaZPrigimalia/Data'
     destination.mkdir(parents=True, exist_ok=True)
     owner_file = destination / 'stage-manifest.json'
     previous = json.loads(owner_file.read_text()) if owner_file.exists() else {'files': {}}
@@ -42,4 +47,7 @@ def stage(root=ROOT):
 
 
 if __name__ == '__main__':
-    print(f'Staged {stage()} runtime catalogues; server overrides and saves untouched.')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--project-dir', type=Path, help='Optional existing Unreal project directory; source catalogues remain in this checkout.')
+    args = parser.parse_args()
+    print(f'Staged {stage(project_dir=args.project_dir)} runtime catalogues; server overrides and saves untouched.')

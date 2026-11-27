@@ -1,0 +1,64 @@
+name: SKARVIK - independently verify second Big City district and 21 town roads after reload
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-reopen-city-district-b2-and-village-roads.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-map-actor-persistence:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Ensure native stage has both successful CitySample and town gateway backup markers
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Unsafe stage'}
+          foreach($p in @(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\First24RegionalTownGateways20261101\graded-before-gateway.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\VisibleBigCitySampleDistrictB2_20261101\graded-before-second-real-city-block.umap'))){
+            if(!(Test-Path -LiteralPath $p)){throw "Required saved native world or original file missing $p"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal editor active'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_town_gateways_and_real_city_b2_persisted.py')
+          if($LASTEXITCODE -ne 0){throw 'Independent native map source syntax invalid'}
+      - name: Reopen actual graded 48km Unreal World Partition, verify all 608 gateway actors and original second district StaticMeshes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_CITY_AND_TOWN_REOPEN_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-city-district-and-town-gateway-persistence-proof.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_town_gateways_and_real_city_b2_persisted.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_CITY_AND_TOWN_REOPEN_REPORT)){throw 'Missing independent native map validation evidence'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_CITY_AND_TOWN_REOPEN_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_NATIVE_CITY_AND_GATEWAY_REOPEN_STATE='+$r.state)
+          Write-Host ('SKARVIK_NATIVE_GATEWAY_REOPEN_ACTORS='+$r.persistentNativeActors.newTownGatewayRoadMeshes)
+          Write-Host ('SKARVIK_NATIVE_BIGCITY_SECOND_REOPEN_ACTORS='+$r.persistentNativeActors.newCitySampleSecondDistrict)
+          if($code -ne 0 -or $r.state -ne 'NATIVE_BIGCITY_SECOND_REAL_DISTRICT_AND_21_TOWN_ENTRANCES_PERSIST_REOPEN_NOT_DRIVEN'){
+            throw ('Native Big City and entrance actors did not reopen: '+$r.error)
+          }
+          Write-Host 'SKARVIK_NATIVE_48KM_CITY_AND_21_TOWN_CONNECTIONS_REOPEN_VERIFIED=true'
+          Write-Host 'SKARVIK_SM5_REAL_DRIVING_AND_ALL_BIG_CITY_86K_ACTORS_STILL_NOT_VERIFIED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-real-city-b2-and-21-native-village-gateways-reopen
+          path: skarvik-city-district-and-town-gateway-persistence-proof.json
+          if-no-files-found: warn

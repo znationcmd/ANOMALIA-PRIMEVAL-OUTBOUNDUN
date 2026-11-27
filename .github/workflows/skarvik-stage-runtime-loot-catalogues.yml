@@ -1,0 +1,59 @@
+name: ANOMALIA - stage authoritative loot catalogues into SKARVIK project
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-stage-runtime-loot-catalogues.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  stage-runtime-catalogues:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Validate the exact existing staging project and idle editor
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted project stage'}
+          if(!(Test-Path -LiteralPath (Join-Path $root 'AnomaliaZPrigimalia.uproject'))){throw 'Existing Unreal project missing'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal process active; user session preserved'}
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          if(!(Test-Path -LiteralPath $python)){throw 'UE 5.8 bundled Python missing'}
+          Write-Host ('TARGET_PROJECT='+$root)
+          Write-Host 'SERVER_SAVES_AND_EXISTING_MAPS_WILL_NOT_BE_TOUCHED=true'
+      - name: Stage five validated catalogue defaults at the exact native C++ lookup path
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\stage-runtime-data.py') --project-dir $root
+          if($LASTEXITCODE -ne 0){throw 'Runtime catalogue staging refused or failed'}
+          $dest=Join-Path $root 'Content\AnomaliaZPrigimalia\Data'
+          $manifest=Get-Content (Join-Path $dest 'stage-manifest.json') -Raw | ConvertFrom-Json
+          foreach($name in @('loot_items_catalog.json','loot_tiers.json','loot_spawns.json','rp_items_catalog.json','rp_economy.json')){
+            $file=Join-Path $dest $name
+            if(!(Test-Path -LiteralPath $file)){throw "Missing staged runtime catalogue $name"}
+            $source=Join-Path $env:GITHUB_WORKSPACE ('public\config\'+$name)
+            if((Get-FileHash $file -Algorithm SHA256).Hash -ne (Get-FileHash $source -Algorithm SHA256).Hash){throw "Runtime catalogue hash mismatch: $name"}
+            if(!$manifest.files.$name){throw "Ownership manifest missing $name"}
+          }
+          $loot=Get-Content (Join-Path $dest 'loot_items_catalog.json') -Raw | ConvertFrom-Json
+          $rp=Get-Content (Join-Path $dest 'rp_items_catalog.json') -Raw | ConvertFrom-Json
+          $spawns=Get-Content (Join-Path $dest 'loot_spawns.json') -Raw | ConvertFrom-Json
+          if($loot.items.Count -ne 236 -or $rp.items.Count -ne 79 -or $spawns.spawns.Count -ne 17){throw 'Unexpected runtime catalogue or spawn-point count'}
+          Write-Host ('NATIVE_RUNTIME_LOOT_ITEMS='+$loot.items.Count)
+          Write-Host ('NATIVE_RUNTIME_RP_ITEMS='+$rp.items.Count)
+          Write-Host ('NATIVE_RUNTIME_SPAWN_POINTS='+$spawns.spawns.Count)
+          Write-Host 'STAGED_AT_CONTENT_ANOMALIAZPRIGIMALIA_DATA=true'
+          Write-Host 'SERVER_OVERRIDES_SAVED_PROFILES_AND_MAPS_UNTOUCHED=true'

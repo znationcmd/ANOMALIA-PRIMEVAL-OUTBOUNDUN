@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "world": "SKARVIK",
+  "developmentState": "DESIGN_ONLY_NOT_INSTALLED",
+  "goal": "Explorable buildings with physical rooms, interactive doors and discoverable loot, inspired by DayZ interaction conventions without copying its assets.",
+  "appliesTo": "Full 48x48 km world including City Sample downtown, snow metropolis, desert villages, forests and mountains",
+  "citySampleReality": "Exterior modular facades cannot be treated as finished interiors. Actual doorway apertures, fitted interior modules, portals and collisions must be authored.",
+  "accessStrategy": {
+    "allBuildingsExplorableTarget": true,
+    "minimumAccess": "At least one physically traversable floor/room for each designated enterable building; no fake door on sealed exterior",
+    "scalableHighriseRule": "Only authored floors are accessible; never imply whole skyscraper interiors exist when they do not",
+    "otherFloors": "Physically restrict inaccessible floors with plausible barriers; optionally add independent streaming floors later",
+    "noTeleportsForNormalDoors": true,
+    "distanceStreaming": "Load interiors by proximity and unload when safely vacant; preserve persistence independently",
+    "qualityTarget": "SM5 Intel Iris Xe 16GB profile, no mandatory Nanite, low RAM and VRAM budgets, benchmark required"
+  },
+  "categories": [
+    {
+      "id": "house",
+      "places": [
+        "houses",
+        "cabins",
+        "mountain cottages",
+        "snow houses",
+        "desert homes"
+      ],
+      "requiredRooms": [
+        "entry",
+        "kitchen",
+        "living room",
+        "bathroom",
+        "bedroom"
+      ],
+      "door": "swing",
+      "loot": [
+        "food",
+        "clothing",
+        "tools"
+      ]
+    },
+    {
+      "id": "apartment",
+      "places": [
+        "apartment blocks",
+        "city towers",
+        "hotels"
+      ],
+      "requiredRooms": [
+        "ground-floor lobby",
+        "stairs",
+        "selected apartments"
+      ],
+      "door": "swing",
+      "loot": [
+        "clothing",
+        "food",
+        "medical items"
+      ]
+    },
+    {
+      "id": "retail",
+      "places": [
+        "shops",
+        "supermarkets",
+        "pharmacies",
+        "restaurants"
+      ],
+      "requiredRooms": [
+        "sales floor",
+        "stockroom"
+      ],
+      "door": "swing or sliding",
+      "loot": [
+        "consumer goods",
+        "food",
+        "medicine"
+      ]
+    },
+    {
+      "id": "civic",
+      "places": [
+        "hospitals",
+        "police stations",
+        "fire stations",
+        "schools"
+      ],
+      "requiredRooms": [
+        "reception",
+        "corridors",
+        "specialized rooms"
+      ],
+      "door": "swing or sliding",
+      "loot": [
+        "appropriate supplies"
+      ]
+    },
+    {
+      "id": "industrial",
+      "places": [
+        "garages",
+        "factories",
+        "warehouses",
+        "hangars"
+      ],
+      "requiredRooms": [
+        "main hall",
+        "workshop/storage"
+      ],
+      "door": "garage or swing",
+      "loot": [
+        "industrial tools",
+        "parts"
+      ]
+    },
+    {
+      "id": "subterranean",
+      "places": [
+        "basements",
+        "bunkers",
+        "metro stations"
+      ],
+      "requiredRooms": [
+        "access stairs",
+        "service rooms"
+      ],
+      "door": "swing or reinforced",
+      "loot": [
+        "special loot"
+      ]
+    }
+  ],
+  "existingCode": "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaDoorActor.cpp",
+  "existingDoorFeatures": [
+    "replicated door angle",
+    "lock flag",
+    "hinge motion",
+    "door leaf physics obstruction",
+    "distance and line of sight validation"
+  ],
+  "unverifiedOrMissing": [
+    "fitted doors on City Sample facades",
+    "interior meshes and furniture",
+    "consistent door apertures and collision",
+    "stair access",
+    "accessible floor count and coverage",
+    "building loot containers",
+    "interior streaming",
+    "persistent door/loot state verified in PIE and build",
+    "SM5 performance"
+  ],
+  "acceptBeforeClaim": {
+    "actualDoorwayAndTraversableRooms": true,
+    "doorOpensWithKeyboardAndGamepad": true,
+    "validCollisionAndLighting": true,
+    "lootAndInteraction": true,
+    "noInvisibleWalls": true,
+    "stairsNavigation": true,
+    "streamedWithoutTeleport": true,
+    "persistenceAfterReload": true,
+    "PIEAndPackagedVerified": true,
+    "minimumStreetLevelBuildingCoverage": "Target to be determined after full building inventory"
+  },
+  "prohibited": [
+    "Do not pass visual exterior-only meshes as playable interiors",
+    "Do not claim every high-rise floor exists automatically",
+    "Do not change DRAZOVIA or other world packages",
+    "Do not publish licensed City Sample assets to public GitHub",
+    "Do not overwrite protected D:/ANOMALIA"
+  ]
+}

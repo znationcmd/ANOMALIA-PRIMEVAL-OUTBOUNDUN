@@ -1,0 +1,34 @@
+name: SKARVIK - inspect isolated C staging disk usage
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-stage-disk-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-staging:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Read only C stage directory sizes and disk headroom
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if(!(Test-Path -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker'))){throw 'Missing marker'}
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong marker'}
+          foreach($dir in (Get-ChildItem -LiteralPath $root -Directory -Force)){
+            [long]$bytes=0;$count=0
+            foreach($file in (Get-ChildItem -LiteralPath $dir.FullName -File -Recurse -Force -ErrorAction Stop)){$bytes+=[long]$file.Length;$count++}
+            Write-Host ("SKARVIK_STAGE_FOLDER name={0} GiB={1:N3} files={2}" -f $dir.Name,($bytes/1GB),$count)
+          }
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ("SKARVIK_STAGE_C_FREE_GIB={0:N2}" -f $free)
+          foreach($sub in @('Content\Megascans','Content\Prop','Content\Crowd','Content\Vehicle','Content\Map\Big_City_LVL.umap')){
+            Write-Host ("SKARVIK_STAGE_CONTENT name={0} present={1}" -f $sub,(Test-Path -LiteralPath (Join-Path $root $sub)))
+          }
+          Write-Host 'SKARVIK_STAGE_READ_ONLY_SIZE_AUDIT=true'

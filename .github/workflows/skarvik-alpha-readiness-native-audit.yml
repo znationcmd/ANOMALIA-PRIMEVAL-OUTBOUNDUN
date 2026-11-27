@@ -1,0 +1,100 @@
+name: ANOMALIAZ UE5 ALPHA - inspect real character dog car menu and packaging prerequisites
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-alpha-readiness-native-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-alpha-content:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Check original licensed model resources, native runtime and source of truth without changing user files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content $marker -Raw).Trim() -ne '41188816555'){throw 'Unexpected UE5 stage'}
+          $roots=@(
+            $root,
+            'D:\ANOMALIA\unreal',
+            'D:\ANOMALIA\FabImports',
+            'D:\ANOMALIA\sketchfab'
+          )
+          $names=@(
+            'SKM_Manny.uasset','SKM_Quinn.uasset','SK_Mannequin.uasset',
+            'SK_GermanShepherd_01.uasset',
+            'A_type1_Idle_Playing_v01.uasset','A_type1_Walk_Loop_v01.uasset','A_type1_Run_Loop_v01.uasset',
+            'loot_items_catalog.json',
+            'BP_ThirdPersonCharacter.uasset','BP_Survivor.uasset','BP_GermanShepherd.uasset',
+            'SM_e39.uasset','SM_BMW_E39.uasset','SM_BMW_E39.glb'
+          )
+          $found=@()
+          foreach($folder in $roots){
+            if(!(Test-Path -LiteralPath $folder)){continue}
+            # Filter to explicit model/data files, never download or copy third-party packages.
+            foreach($name in $names){
+              $matches=@(Get-ChildItem -LiteralPath $folder -Recurse -File -Filter $name -ErrorAction SilentlyContinue|Select-Object -First 6)
+              foreach($item in $matches){
+                $relative=$item.FullName.Substring($folder.Length).TrimStart([char]'\')
+                $found+=([ordered]@{
+                  sourceRoot=$(if($folder -eq $root){'isolated-stage'}else{[IO.Path]::GetFileName($folder)})
+                  name=$name
+                  relativePath=$relative
+                  sizeMiB=[math]::Round([double]$item.Length/1MB,2)
+                  canUseInCurrentNativeWorld=($folder -eq $root)
+                })
+              }
+            }
+          }
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $map=Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'
+          $exe=Join-Path $root 'Binaries\Win64\AnomaliaZPrigimalia.exe'
+          $game=@(Get-CimInstance Win32_Process | Where-Object {
+            $_.Name -in @('UnrealEditor.exe','UnrealEditor-Cmd.exe','AnomaliaZPrigimalia.exe') -and
+            $_.CommandLine -match 'ANOMALIAZ_SKARVIK_STAGE_41188816555'
+          })
+          $vol=@(Get-CimInstance Win32_LogicalDisk | Where-Object DriveType -eq 3 | ForEach-Object {
+            [ordered]@{drive=$_.DeviceID;freeGiB=[math]::Round([double]$_.FreeSpace/1GB,2)}
+          })
+          $report=[ordered]@{
+            state='REAL_UE5_ALPHA_CONTENT_AND_STORAGE_READONLY_CHECK'
+            nativeStageProjectExists=(Test-Path $project)
+            originalSevenIslandSkarvikMapExists=(Test-Path $map)
+            realPackedWin64ExeExists=(Test-Path $exe)
+            existingNativeProcessCount=$game.Count
+            reportedAssets=$found
+            freeVolumes=$vol
+            stagedDogBodyPresent=@($found | Where-Object { $_['canUseInCurrentNativeWorld'] -and $_['name'] -eq 'SK_GermanShepherd_01.uasset' }).Count -gt 0
+            stagedPlayerMeshPresent=@($found | Where-Object { $_['canUseInCurrentNativeWorld'] -and $_['name'] -in @('SKM_Manny.uasset','SKM_Quinn.uasset','SK_Mannequin.uasset') }).Count -gt 0
+            stagedLootJsonPresent=@($found | Where-Object { $_['canUseInCurrentNativeWorld'] -and $_['name'] -eq 'loot_items_catalog.json' }).Count -gt 0
+            nativeWindowsBuildCreated=$false
+            filesCopiedOrDeleted=$false
+            userDOriginalChanged=$false
+          }
+          $out=Join-Path $env:GITHUB_WORKSPACE 'skarvik-alpha-real-content-readiness.json'
+          ($report|ConvertTo-Json -Depth 7)|Set-Content -LiteralPath $out -Encoding utf8
+          Write-Host ('SKARVIK_ALPHA_ORIGINAL_FINAL_MAP='+$report.originalSevenIslandSkarvikMapExists)
+          Write-Host ('SKARVIK_ALPHA_REAL_STAGED_PLAYER_MESH='+$report.stagedPlayerMeshPresent)
+          Write-Host ('SKARVIK_ALPHA_REAL_STAGED_DOG_MESH='+$report.stagedDogBodyPresent)
+          Write-Host ('SKARVIK_ALPHA_LOOT_JSON_PRESENT='+$report.stagedLootJsonPresent)
+          Write-Host ('SKARVIK_ALPHA_REAL_PACKAGED_EXE='+$report.realPackedWin64ExeExists)
+          Write-Host ('SKARVIK_ALPHA_NATIVE_PROCESSES_ACTIVE='+$report.existingNativeProcessCount)
+          Write-Host ('SKARVIK_ALPHA_LICENSED_CANDIDATE_ASSET_FILES='+$found.Count)
+          Write-Host 'SKARVIK_ALPHA_IS_PLAYABLE_RELEASE_VERIFIED=false'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-alpha-real-content-readiness
+          path: skarvik-alpha-real-content-readiness.json
+          if-no-files-found: warn

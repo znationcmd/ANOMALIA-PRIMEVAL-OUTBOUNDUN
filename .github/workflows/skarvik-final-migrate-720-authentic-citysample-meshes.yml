@@ -1,0 +1,73 @@
+name: SKARVIK - migrate real 720 Big City source architecture components to final coast
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-final-migrate-720-authentic-citysample-meshes.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-bigcity:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Protect real 720 original CitySample source static mesh actors and existing coast
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong native stage'}
+          foreach($p in @(
+           'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+           (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+           (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap'),
+           (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'),
+           (Join-Path $root 'Content\Map\Big_City_LVL.umap'),
+           (Join-Path $root 'Saved\SkarvikCity\FinalV1AuthenticOriginalBuildingMigration_20261101\final-before-houses.umap'))){
+            if(!(Test-Path -LiteralPath $p)){throw "Required original/final map or building migration backup absent: $p"}
+          }
+          if(Test-Path (Join-Path $root 'Saved\SkarvikCity\FinalCitySampleSourceMeshMigration20261101\final-before-citysample.umap')){
+            throw 'City Sample source actor copy already attempted; no duplicate'
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Other Unreal session active'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          if($free -lt 10){throw 'Disk space too low for source city mesh import'}
+          Write-Host ('SKARVIK_FINAL_720_CITYSOURCE_MESH_C_FREE_GIB='+[math]::Round($free,2))
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\migrate_skarvik_720_real_citysample_parts_to_final.py')
+          if($LASTEXITCODE -ne 0){throw 'Native City Sample relocation Python syntax invalid'}
+          Write-Host 'SKARVIK_FINAL_720_REAL_CITYSOURCE_MESH_COPY_PREFLIGHT_OK=true'
+      - name: Extract four authentic city sectors in batches and save original meshes on final 48km City plateau
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_FINAL_CITYSOURCE_MIGRATION_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-native-720-real-city-meshes.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\migrate_skarvik_720_real_citysample_parts_to_final.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_FINAL_CITYSOURCE_MIGRATION_REPORT)){throw 'Native City Sample source mesh migration report missing'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_FINAL_CITYSOURCE_MIGRATION_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_FINAL_REAL_CITYSOURCE_MIGRATION_STATE='+$r.state)
+          Write-Host ('SKARVIK_FINAL_REAL_CITYSOURCE_MIGRATION_ACTORS='+$r.copiedOriginalSourceMeshActors)
+          Write-Host ('SKARVIK_FINAL_REAL_CITYSOURCE_MIGRATION_SOURCE_COUNT='+$r.sourceOldCitySampleNativeMeshActorCount)
+          Write-Host ('SKARVIK_FINAL_REAL_CITYSOURCE_MIGRATION_ORIGINAL_UNCHANGED='+$r.sourceMapsNotModified)
+          if($code -ne 0 -or $r.state -ne 'FINAL_SKARVIK_ALL_720_EXISTING_REAL_CITY_SAMPLE_PARTS_MIGRATED_AND_SAVED_NOT_COMPLETE_86K_CITY'){
+            throw ('Cannot claim 720 original CitySample meshes migrated: '+$r.error)
+          }
+          Write-Host 'SKARVIK_FINAL_REAL_CITY_SAMPLE_720_3D_ACTORS_REPERSISTED_ON_FINAL_COAST=true'
+          Write-Host 'SKARVIK_FINAL_FULL_BIG_CITY_86K_EXTERNAL_ACTORS_AND_SM5_TRAFFIC_STILL_UNVERIFIED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-final-720-authentic-original-citysample-actors-persistence-receipt
+          path: skarvik-final-native-720-real-city-meshes.json
+          if-no-files-found: warn

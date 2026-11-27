@@ -1,0 +1,83 @@
+name: SKARVIK - retry native City Sample class build with RuleProcessor
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-native-classes-ruleprocessor-retry.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  resolve-native-dependency:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 110
+    steps:
+      - name: Inspect isolated stage and original plugin, preserve all existing files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $src='D:\ANOMALIA\FabImports\CitySample'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted stage marker'}
+          foreach($p in @('Source\CitySample\CitySample.Build.cs','Source\CitySampleAnimGraphRuntime\CitySampleAnimGraphRuntime.Build.cs','Plugins\Traffic\Traffic.uplugin','Plugins\CitySampleMassCrowd\CitySampleMassCrowd.uplugin','Plugins\HoverDrone\HoverDrone.uplugin','Plugins\WorldAudioDataSystem\WorldAudioDataSystem.uplugin','Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap')){
+            if(!(Test-Path -LiteralPath (Join-Path $root $p))){throw "Incomplete previous staged file: $p"}
+          }
+          if(!(Test-Path -LiteralPath (Join-Path $src 'Plugins\RuleProcessor\RuleProcessor.uplugin'))){throw 'RuleProcessor missing from original'}
+          if(Test-Path -LiteralPath (Join-Path $root 'Plugins\RuleProcessor')){throw 'RuleProcessor already staged; refuse overwrite'}
+          foreach($p in @('Content\Crowd','Content\Vehicle')){
+            if(Test-Path -LiteralPath (Join-Path $root $p)){throw "Excluded content detected: $p"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal process running'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ("SKARVIK_NATIVE_RETRY_FREE_C_GIB={0:N2}" -f $free)
+          if($free -lt 22){throw 'C disk below 22GiB safety reserve'}
+          Write-Host 'SKARVIK_RULEPROCESSOR_SOURCE_CONFIRMED=true'
+      - name: Restore native module declarations and copy only RuleProcessor
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $src='D:\ANOMALIA\FabImports\CitySample\Plugins\RuleProcessor'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $destination=Join-Path $root 'Plugins\RuleProcessor'
+          if(Test-Path -LiteralPath $destination){throw 'Refuse overwriting RuleProcessor'}
+          Copy-Item -LiteralPath $src -Destination $destination -Recurse
+          if(!(Test-Path -LiteralPath (Join-Path $destination 'RuleProcessor.uplugin'))){throw 'RuleProcessor plugin copy incomplete'}
+          Write-Host 'SKARVIK_RULEPROCESSOR_PLUGIN_STAGED=true'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $backup=Join-Path $root 'Saved\SkarvikCity\AnomaliaZPrigimalia.uproject.pre-native-citymodules'
+          if(!(Test-Path -LiteralPath $backup)){throw 'Previous protected project descriptor backup missing'}
+          # Original staged project must currently have NO CitySample module enabled after rollback.
+          $data=Get-Content -LiteralPath $project -Raw|ConvertFrom-Json
+          foreach($module in @('CitySample','CitySampleAnimGraphRuntime')){
+            if(@($data.Modules|Where-Object{$_.Name -eq $module}).Count){throw "Unexpected already-enabled CitySample module $module"}
+            $data.Modules=@($data.Modules)+@([pscustomobject]@{Name=$module;Type='Runtime';LoadingPhase='Default'})
+          }
+          foreach($name in @('RuleProcessor','Traffic','CitySampleMassCrowd','HoverDrone','WorldAudioDataSystem','Soundscape','MassGameplay','MassAI','MassCrowd','StateTree','ZoneGraph','MotionWarping','ContextualAnimation','AnimToTexture','HairStrands','ModularGameplay','OnlineSubsystem','NetworkPrediction')){
+            if(!@($data.Plugins|Where-Object{$_.Name -eq $name}).Count){
+              $data.Plugins=@($data.Plugins)+@([pscustomobject]@{Name=$name;Enabled=$true})
+            }
+          }
+          [IO.File]::WriteAllText($project,($data|ConvertTo-Json -Depth 32),(New-Object System.Text.UTF8Encoding($false)))
+          Write-Host 'SKARVIK_RULEPROCESSOR_AND_CITYSAMPLE_NATIVE_MODULES_REGISTERED=true'
+      - name: Compile CitySample native geometry class types in UE 5.8
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\AnomaliaZPrigimalia.uproject'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          & $build AnomaliaZPrigimaliaEditor Win64 Development $project -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
+          if($LASTEXITCODE -ne 0){throw "CitySample C++ compile failed exit=$LASTEXITCODE"}
+          Write-Host 'SKARVIK_CITYSAMPLE_NATIVE_MODULES_COMPILATION_SUCCESS=true'
+          Write-Host 'SKARVIK_CITY_PLAYABILITY_NOT_YET_TESTED=true'
+      - name: On compiler failure restore previous staged project descriptor automatically
+        if: failure()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $backup=Join-Path $root 'Saved\SkarvikCity\AnomaliaZPrigimalia.uproject.pre-native-citymodules'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          if(Test-Path -LiteralPath $backup){Copy-Item -LiteralPath $backup -Destination $project -Force;Write-Host 'SKARVIK_PROJECT_DESCRIPTOR_ROLLBACK_SUCCESS=true'}
+          Write-Host 'SKARVIK_D_ORIGINALS_UNMODIFIED=true'

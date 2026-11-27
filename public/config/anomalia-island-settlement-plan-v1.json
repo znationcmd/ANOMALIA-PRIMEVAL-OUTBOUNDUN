@@ -1,0 +1,372 @@
+{
+  "schemaVersion": 1,
+  "title": "ANOMALIA’Z — villes et villages sur les îles",
+  "status": "ISLAND_SETTLEMENTS_PLANNED_NOT_NATIVE_AUTHORED",
+  "terrainEvidence": "unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaNewFourWorldHeights.h",
+  "rules": {
+    "preserveExistingMapsAndActors": true,
+    "noFlatRoadOverOpenWater": true,
+    "terrainDryLandRequired": true,
+    "clearanceFromCoastlineRequiresNativeHeightAndSlopeReview": true,
+    "separateSaveNamespacePerMap": true,
+    "independentWaterAndIceGameplayValidation": true,
+    "waterTransportation": "Harbors, piers, boats/ferries and optional seasonal safe ice crossing; never treat sea route as paved road",
+    "islandVillagesNeeds": "Homes, docks, wells, paths, shelters, local commerce, safe spawn; scaled to actual dry land extent",
+    "nativeConstructionConfirmed": false,
+    "fullSm5PlaytestConfirmed": false
+  },
+  "maps": [
+    {
+      "mapId": "archipelago-v2",
+      "displayName": "SKARVIK",
+      "mapKm": [
+        48,
+        48
+      ],
+      "existingSettlementPlan": "public/config/skarvik-world-layout-48km.json",
+      "originalArchipelagoTerrain": "unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaArchipelagoHeight.h",
+      "currentActiveGradedTerrain": "unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaSkarvikTerrain.h",
+      "status": "SEPARATE_NATIVE_7_ISLAND_WP_WORLD_AND_15_3D_LOCALITY_CORES_VERIFIED_ORIGINAL_GRADED_MAP_PRESERVED",
+      "originalSourceIslandSettlementNames": [
+        "FROSTGARD",
+        "VARENGARD",
+        "PORT ELIAS",
+        "COL DES AIGLES",
+        "PIN-NORD",
+        "BOIS-SUD",
+        "NIVERGARD",
+        "DUNEVOILE",
+        "ALMARI",
+        "ELZAR",
+        "ROCHENORD",
+        "CAIRN-BAS",
+        "BLANCHECRÊTE",
+        "CAP-AUBE"
+      ],
+      "note": "Seven detached islands and native 3D first cores for fifteen island localities are present in separately saved/reopened UE5.8 World Partition map, not yet merged with old graded SKARVIK's 1,039 buildings, Big City, or previous road network. Do not claim all 125 localities migrated.",
+      "newSettlementActorsRequested": 0,
+      "coastlineRealignmentPending": false,
+      "islandTravel": [
+        "boat",
+        "ferry",
+        "marina",
+        "coastal trail"
+      ],
+      "doNotRegradeNativeLandWithoutBackupAndVehicleRetest": true,
+      "newNativeIslandWorld": "/Game/Maps/PRIGIMALIA_SKARVIK_ISLANDS_v1",
+      "sevenIslandsNativeCreated": true,
+      "islandLocalityCoresNativeCount": 15,
+      "islandBuildingStaticMeshActorCount": 128,
+      "nativeConstructionRun": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41299689266",
+      "nativeReopenRun": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41299800622",
+      "nativeCoastlineRun": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41299937468",
+      "nativeOriginalGradedMapAndPR60Preserved": true,
+      "nativeOceanRendered": false,
+      "nativeIslandVillageGameplayTested": false,
+      "nativeAll125LocalitiesMigrated": false,
+      "newProvisionalIslandVillage": "PORT DES BRUMES",
+      "mainlandReconciliationPending": true
+    },
+    {
+      "mapId": "nogokv-51-v1",
+      "displayName": "НОГОКВ-51",
+      "mapKm": [
+        15.3,
+        15.3
+      ],
+      "targetLocalityCount": 9,
+      "terrainWorldEnum": "Nogokv51",
+      "surfaceValidationThreshold": 0.309812376,
+      "terrainConnectivityNote": "Existing native DryLand surface has one large connected landmass plus a smaller separate landmass in current source maths; extra islands require a controlled terrain revision.",
+      "settlements": [
+        {
+          "id": "n-port",
+          "name": "NOGOKV-PORT",
+          "role": "main-town",
+          "landmass": "large-polar-landmass",
+          "eastKm": -2.85,
+          "northKm": 1.5,
+          "footprintKm": [
+            0.45,
+            0.45
+          ],
+          "status": "planned-only-native-placement-and-water-collision-not-tested"
+        },
+        {
+          "id": "n-northern",
+          "name": "FORT DE BRUME",
+          "role": "small-town",
+          "landmass": "large-polar-landmass",
+          "eastKm": -4.3,
+          "northKm": 2,
+          "footprintKm": [
+            0.25,
+            0.25
+          ],
+          "status": "planned-only-native-placement-and-water-collision-not-tested"
+        },
+        {
+          "id": "n-east",
+          "name": "STATION VOSTOK",
+          "role": "village",
+          "landmass": "large-polar-landmass",
+          "eastKm": 2.3,
+          "northKm": -1.8,
+          "footprintKm": [
+            0.15,
+            0.15
+          ],
+          "status": "planned-only-native-placement-and-water-collision-not-tested"
+        },
+        {
+          "id": "n-boreal",
+          "name": "BOIS-GIVRÉ",
+          "role": "village",
+          "landmass": "large-polar-landmass",
+          "eastKm": 3.8,
+          "northKm": 3.9,
+          "footprintKm": [
+            0.15,
+            0.15
+          ],
+          "status": "planned-only-native-placement-and-water-collision-not-tested"
+        },
+        {
+          "id": "n-ice",
+          "name": "CAP GELÉ",
+          "role": "village",
+          "landmass": "large-polar-landmass",
+          "eastKm": 1,
+          "northKm": 4.3,
+          "footprintKm": [
+            0.15,
+            0.15
+          ],
+          "status": "planned-only-native-placement-and-water-collision-not-tested"
+        },
+        {
+          "id": "n-southern",
+          "name": "PORT BLANC",
+          "role": "village",
+          "landmass": "large-polar-landmass",
+          "eastKm": 1,
+          "northKm": 1.2,
+          "footprintKm": [
+            0.15,
+            0.15
+          ],
+          "status": "planned-only-native-placement-and-water-collision-not-tested"
+        },
+        {
+          "id": "n-west",
+          "name": "NORDBERG",
+          "role": "village",
+          "landmass": "large-polar-landmass",
+          "eastKm": -3,
+          "northKm": 4,
+          "footprintKm": [
+            0.15,
+            0.15
+          ],
+          "status": "planned-only-native-placement-and-water-collision-not-tested"
+        },
+        {
+          "id": "n-island-harbor",
+          "name": "ÎLE VARG — PORT",
+          "role": "small-town",
+          "landmass": "detached-southwest-island",
+          "eastKm": -4.55,
+          "northKm": -4.05,
+          "footprintKm": [
+            0.24,
+            0.24
+          ],
+          "status": "planned-only-native-placement-and-water-collision-not-tested"
+        },
+        {
+          "id": "n-island-hamlet",
+          "name": "ÎLE VARG — HAMEAU",
+          "role": "village",
+          "landmass": "detached-southwest-island",
+          "eastKm": -4.9,
+          "northKm": -3.65,
+          "footprintKm": [
+            0.12,
+            0.12
+          ],
+          "status": "planned-only-native-placement-and-water-collision-not-tested"
+        }
+      ],
+      "travelLinks": [
+        {
+          "from": "n-port",
+          "to": "n-island-harbor",
+          "mode": "boat-or-ferry",
+          "status": "planned-no-pier-or-vessel-instanced"
+        },
+        {
+          "from": "n-island-harbor",
+          "to": "n-island-hamlet",
+          "mode": "terrain-graded-local-road",
+          "status": "planned-not-paved"
+        },
+        {
+          "from": "n-port",
+          "to": "n-east",
+          "mode": "terrain-graded-mainland-road",
+          "status": "planned-not-paved"
+        }
+      ]
+    },
+    {
+      "mapId": "paradisiomania-v1",
+      "displayName": "PARADISIOMANIA",
+      "mapKm": [
+        10,
+        10
+      ],
+      "targetLocalityCount": 7,
+      "terrainWorldEnum": "Paradisiomania",
+      "mainlandIslandsFromSource": true,
+      "settlements": [
+        {
+          "id": "p-capital",
+          "name": "PORT PARADIS",
+          "role": "main-city",
+          "landmass": "mainland",
+          "eastKm": -0.3,
+          "northKm": 0.1,
+          "footprintKm": [
+            0.7,
+            0.7
+          ],
+          "status": "planned-only-native-placement-and-water-collision-not-tested"
+        },
+        {
+          "id": "p-north-east",
+          "name": "ÎLE AZURA — VILLAGE",
+          "role": "village",
+          "landmass": "separate-island-ne",
+          "eastKm": 4.5,
+          "northKm": 2.7,
+          "footprintKm": [
+            0.12,
+            0.12
+          ],
+          "status": "planned-only-native-placement-and-water-collision-not-tested"
+        },
+        {
+          "id": "p-north-west",
+          "name": "ÎLE CORAIL — VILLAGE",
+          "role": "village",
+          "landmass": "separate-island-nw",
+          "eastKm": -4.25,
+          "northKm": 3.5,
+          "footprintKm": [
+            0.12,
+            0.12
+          ],
+          "status": "planned-only-native-placement-and-water-collision-not-tested"
+        },
+        {
+          "id": "p-south-east",
+          "name": "ÎLE LAGUNE — VILLAGE",
+          "role": "village",
+          "landmass": "separate-island-se",
+          "eastKm": 4.3,
+          "northKm": -3.8,
+          "footprintKm": [
+            0.12,
+            0.12
+          ],
+          "status": "planned-only-native-placement-and-water-collision-not-tested"
+        },
+        {
+          "id": "p-south-west",
+          "name": "ÎLE PALMERAIE — VILLAGE",
+          "role": "village",
+          "landmass": "separate-island-sw",
+          "eastKm": -3.4,
+          "northKm": -4.2,
+          "footprintKm": [
+            0.12,
+            0.12
+          ],
+          "status": "planned-only-native-placement-and-water-collision-not-tested"
+        },
+        {
+          "id": "p-northern",
+          "name": "ÎLE ÉMERAUDE — VILLAGE",
+          "role": "village",
+          "landmass": "separate-island-n",
+          "eastKm": 3,
+          "northKm": 4.45,
+          "footprintKm": [
+            0.12,
+            0.12
+          ],
+          "status": "planned-only-native-placement-and-water-collision-not-tested"
+        },
+        {
+          "id": "p-eastern",
+          "name": "ÎLE DU PHARE — HAMEAU",
+          "role": "hamlet",
+          "landmass": "separate-island-e",
+          "eastKm": 4.7,
+          "northKm": -1,
+          "footprintKm": [
+            0.1,
+            0.1
+          ],
+          "status": "planned-only-native-placement-and-water-collision-not-tested"
+        }
+      ],
+      "travelLinks": [
+        {
+          "from": "p-capital",
+          "to": "p-north-east",
+          "mode": "boat-or-ferry",
+          "status": "planned-no-pier-or-vessel-instanced"
+        },
+        {
+          "from": "p-capital",
+          "to": "p-north-west",
+          "mode": "boat-or-ferry",
+          "status": "planned-no-pier-or-vessel-instanced"
+        },
+        {
+          "from": "p-capital",
+          "to": "p-south-east",
+          "mode": "boat-or-ferry",
+          "status": "planned-no-pier-or-vessel-instanced"
+        },
+        {
+          "from": "p-capital",
+          "to": "p-south-west",
+          "mode": "boat-or-ferry",
+          "status": "planned-no-pier-or-vessel-instanced"
+        },
+        {
+          "from": "p-capital",
+          "to": "p-northern",
+          "mode": "boat-or-ferry",
+          "status": "planned-no-pier-or-vessel-instanced"
+        },
+        {
+          "from": "p-capital",
+          "to": "p-eastern",
+          "mode": "boat-or-ferry",
+          "status": "planned-no-pier-or-vessel-instanced"
+        }
+      ]
+    }
+  ],
+  "validationGates": [
+    "Native Unreal Engine 5.8 dry-land sampling at every footprint corner",
+    "Coastline and independent-island connected-component validation",
+    "Terrain slope and flood-level verification on source heightfield",
+    "StaticMesh village and town authoring inside actual separate world maps",
+    "Pier, harbour, ferry, dock, and deep-water vessel collision tests",
+    "World Partition reopen and packaged SM5 boat, on-foot and vehicle gameplay"
+  ]
+}

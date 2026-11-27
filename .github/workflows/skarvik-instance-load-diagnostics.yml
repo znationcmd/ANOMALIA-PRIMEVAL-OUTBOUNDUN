@@ -1,0 +1,45 @@
+name: SKARVIK - inspect UE5 LevelInstance load failure and World Partition logs
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-instance-load-diagnostics.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  diagnose:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Extract native City Sample LevelInstance failure signatures read-only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted stage'}
+          $logRoot=Join-Path $root 'Saved\Logs'
+          $reports=@(
+            (Join-Path $root 'Saved\SkarvikCity\city-instance.json'),
+            (Join-Path $env:GITHUB_WORKSPACE 'skarvik-city-instance-result.json')
+          )
+          foreach($p in $reports){
+            if(Test-Path -LiteralPath $p){Write-Host ("SKARVIK_INSTANCE_REPORT="+$p);Get-Content -LiteralPath $p -Raw}
+            else{Write-Host ("SKARVIK_INSTANCE_REPORT_ABSENT="+$p)}
+          }
+          $logs=@(Get-ChildItem -LiteralPath $logRoot -File -Filter '*AnomaliaZPrigimalia*.log' -ErrorAction SilentlyContinue| Sort-Object LastWriteTimeUtc -Descending|Select-Object -First 4)
+          foreach($f in $logs){
+            Write-Host ("SKARVIK_INSTANCE_LOG_FILE="+$f.Name)
+            $match=Get-Content -LiteralPath $f.FullName -ErrorAction SilentlyContinue |
+              Where-Object{$_ -match 'LogLevelInstance|LevelInstance|LogWorldPartition|WorldPartition|LoadErrors: Error|LogLinker: Warning|LogLinker: Error|LogPython: Error|SKARVIK_CITY_LEVEL_INSTANCE|Big_City_LVL|CitySample|Missing Class|Missing.*Class|Failed to load|Cannot load|Could not load'} |
+              Select-Object -Last 135
+            foreach($line in $match){Write-Host $line}
+          }
+          $map=Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'
+          if(Test-Path -LiteralPath $map){$f=Get-Item $map;Write-Host ("SKARVIK_NATIVE_MAP_BYTES="+$f.Length);Write-Host ("SKARVIK_NATIVE_MAP_LAST_WRITE="+$f.LastWriteTimeUtc.ToString('o'))}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ("SKARVIK_FREE_C_GIB="+[math]::Round($free,2))
+          Write-Host "SKARVIK_READ_ONLY_LOG_DIAGNOSTIC_COMPLETE=true"

@@ -1,0 +1,23 @@
+name: SKARVIK - verify true leveled terrain for 124 villages and cities
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-graded-relief-source-tests.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-terrain-terraces:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check native C++ source terrain grade before modifying UE5 map
+        shell: bash
+        run: |
+          set -euo pipefail
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic \
+            -I unreal/Source/AnomaliaZPrigimalia \
+            scripts/ue5/test-skarvik-graded-relief.cpp -o /tmp/test-skarvik-relief
+          /tmp/test-skarvik-relief
+          echo 'SKARVIK_GRADED_RELIEF_READY_FOR_NATIVE_UE_STAGE=true'

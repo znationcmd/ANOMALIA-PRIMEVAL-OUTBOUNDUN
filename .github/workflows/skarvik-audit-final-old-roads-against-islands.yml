@@ -1,0 +1,63 @@
+name: SKARVIK - audit 3D road segment coastal safety before final island migration
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-audit-final-old-roads-against-islands.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  final-coast-road-audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Verify isolated final coast plus unchanged original road World Partition sources
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong isolated stage'}
+          foreach($file in @('D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'))){
+            if(!(Test-Path -LiteralPath $file)){throw "Missing source road or final world: $file"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Concurrent UE session'}
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_final_old_roads_against_seven_islands.py')
+          if($LASTEXITCODE -ne 0){throw 'Real road island safety audit Python invalid'}
+          Write-Host 'SKARVIK_FINAL_ROAD_ACTOR_LANDMASK_AUDIT_PREFLIGHT_OK=true'
+      - name: Read original 3D road WP actor bounds and compute safe native final coast subset with no sea-asphalt
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_FINAL_ROAD_AUDIT_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-old-asphalt-coast-safe-actor-ids.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_final_old_roads_against_seven_islands.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $rc=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_FINAL_ROAD_AUDIT_REPORT)){throw 'No final coastal road safety report'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_FINAL_ROAD_AUDIT_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_FINAL_ROAD_COAST_AUDIT_STATE='+$r.state)
+          Write-Host ('SKARVIK_FINAL_OLD_ROAD_MESHES_AUDITED='+$r.originalNativeReal3DRoadActors)
+          Write-Host ('SKARVIK_FINAL_OLD_ROAD_MESHES_GRADE_AND_DRY_SAFE='+$r.nativeCoastSafeSourceRoadActorCount)
+          Write-Host ('SKARVIK_FINAL_OLD_ROAD_MESHES_UNSAFE_OR_UNDERWATER='+$r.unsafeSourceRoadActorCount)
+          if($r.state -ne 'FINAL_SEVEN_ISLAND_ROAD_3D_SOURCE_COAST_AND_SLOPE_AUDITED_NOT_YET_MIGRATED'){
+            throw ('Roads not safe to claim original coast compliance: '+$r.error)
+          }
+          if($rc -ne 0){Write-Host ('SKARVIK_FINAL_READONLY_UNREAL_SHUTDOWN_NONZERO='+$rc)}
+          Write-Host 'SKARVIK_FINAL_OLD_ASPHALT_ROAD_ACTORS_ONLY_AUDITED_NOT_COPIED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-final-seven-island-old-3d-road-landmask-grade-audit
+          path: skarvik-final-old-asphalt-coast-safe-actor-ids.json
+          if-no-files-found: warn

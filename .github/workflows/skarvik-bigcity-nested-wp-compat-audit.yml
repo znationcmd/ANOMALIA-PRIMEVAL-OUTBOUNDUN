@@ -1,0 +1,59 @@
+name: SKARVIK - diagnose Big City nested World Partition integration without slow load
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-bigcity-nested-wp-compat-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Inspect CitySample native source and protected project, read-only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Untrusted native stage'}
+          if(!(Test-Path -LiteralPath 'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap')){throw 'Original D project missing'}
+          if(!(Test-Path -LiteralPath (Join-Path $root 'Content\Map\Big_City_LVL.umap'))){throw 'Original City Sample World unavailable'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another native Unreal session running'}
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_bigcity_nested_wp_compat.py'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'CitySample audit Python syntax invalid'}
+      - name: Inspect CitySample UWorld and nested WP flags without instancing or saving
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_bigcity_nested_wp_compat.py'
+          $env:SKARVIK_BIGCITY_COMPAT_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-bigcity-compat.json'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_BIGCITY_COMPAT_REPORT)){throw 'No native CitySample survey result'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_BIGCITY_COMPAT_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_BIGCITY_COMPAT_STATE='+$r.state)
+          Write-Host ('SKARVIK_BIGCITY_IS_SOURCE_WP='+$r.sourceCityHasWorldPartition)
+          Write-Host ('SKARVIK_BIGCITY_MODULES_LOADED='+$r.CitySampleModulesPresent)
+          if($code -ne 0 -or $r.state -ne 'CITY_SAMPLE_SOURCE_LOADED_NESTED_WORLD_PARTITION_COMPAT_REVIEW_REQUIRED'){
+            throw ('CitySample survey error: '+$r.error)
+          }
+          Write-Host 'SKARVIK_CITY_SAMPLE_NATIVE_SOURCE_WP_AUDITED_WITHOUT_REIMPORT=true'
+          Write-Host 'SKARVIK_BIG_CITY_ACTUAL_LEVEL_INTEGRATION_NOT_YET_PROVEN=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-citysample-nested-worldpartition-compat-report
+          path: skarvik-bigcity-compat.json
+          if-no-files-found: warn

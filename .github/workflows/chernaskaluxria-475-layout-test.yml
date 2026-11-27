@@ -1,0 +1,24 @@
+name: CHERNASKALUXRIA - validate 475 named localities on 100x100km
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths:
+      - 'tests/test_chernaskaluxria_475_localities.py'
+      - 'public/config/chernaskaluxria-world-layout-100km.json'
+      - 'public/config/anomalia-map-catalog.json'
+      - 'public/config/prigimalia-settlement-density-by-map.json'
+      - '.github/workflows/chernaskaluxria-475-layout-test.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  plan-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prove all 475 planned sites, 677 connected road corridors and 11 distinct maps
+        run: |
+          python3 -m unittest discover -s tests -p 'test_chernaskaluxria_475_localities.py' -v
+          echo 'CHERNASKALUXRIA_100KM_475_LOCALITIES_PLANNING_VALIDATED=true'
+          echo 'CHERNASKALUXRIA_475_3D_WORLD_PARTITION_ACTORS_PENDING=true'

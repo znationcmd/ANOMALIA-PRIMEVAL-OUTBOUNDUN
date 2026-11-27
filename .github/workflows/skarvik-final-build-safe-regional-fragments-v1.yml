@@ -1,0 +1,115 @@
+name: SKARVIK - build genuine coastal regional asphalt and verify native reload
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-final-build-safe-regional-fragments-v1.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  build-regional-real-asphalt:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-final-382-regional-route-native-coast-audit
+          run-id: 41314750218
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts/native-regional-survey
+      - name: Check C stage, source maps, disk and native scripts without concurrent Unreal
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted native stage'}
+          foreach($f in @('D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+              (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'),
+              (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+              (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap'),
+              (Join-Path $root 'Content\Map\Big_City_LVL.umap'))){
+            if(!(Test-Path -LiteralPath $f)){throw "Protected existing world missing: $f"}
+          }
+          if(Test-Path (Join-Path $root 'Saved\SkarvikCity\FinalRealRegionalCoastalPilot20261101\final-before-regional-pilot.umap')){
+            throw 'Regional native pilot already attempted: refuse duplicate road actors'
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){
+            throw 'Concurrent native Unreal process detected'
+          }
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ('SKARVIK_REGIONAL_NATIVE_STAGE_FREE_GIB='+[math]::Round($free,2))
+          if($free -lt 12){throw 'Insufficient free C stage disk space'}
+          $receipt=Join-Path $env:GITHUB_WORKSPACE 'receipts\native-regional-survey\skarvik-final-382-regional-road-coastal-feasibility.json'
+          if(!(Test-Path -LiteralPath $receipt)){throw 'Independent native coastal survey missing'}
+          $a=Get-Content -LiteralPath $receipt -Raw|ConvertFrom-Json
+          if($a.state -ne 'SKARVIK_FINAL_382_ROUTE_NATIVE_COAST_FEASIBILITY_SURVEY_ONLY_NO_BUILD' -or $a.fullyDryGradeSurveyedRouteCount -lt 1){
+            throw 'No verified dry survey candidate'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          foreach($s in @('unreal\Scripts\author_skarvik_final_safe_regional_road_fragments_v1.py',
+                          'unreal\Scripts\verify_skarvik_final_safe_regional_road_fragments_v1.py')){
+            & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE $s)
+            if($LASTEXITCODE -ne 0){throw "Native regional road script syntax invalid: $s"}
+          }
+          Write-Host 'SKARVIK_NATIVE_REGIONAL_ROAD_PREFLIGHT_OK=true'
+      - name: Physically create only collision-free dry authentic road segments on final seven-island terrain
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_FINAL_REGIONAL_ROAD_PLAN=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $env:SKARVIK_FINAL_REGIONAL_SITE_PLAN=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-final-coastal-migration-125-sites.json'
+          $env:SKARVIK_FINAL_REGIONAL_SURVEY_RECEIPT=Join-Path $env:GITHUB_WORKSPACE 'receipts\native-regional-survey\skarvik-final-382-regional-road-coastal-feasibility.json'
+          $env:SKARVIK_FINAL_REGIONAL_PILOT_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-native-regional-fragment-build.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $src=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_final_safe_regional_road_fragments_v1.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$src" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_FINAL_REGIONAL_PILOT_REPORT)){throw 'No native road report'}
+          $a=Get-Content -LiteralPath $env:SKARVIK_FINAL_REGIONAL_PILOT_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_FINAL_NATIVE_REGIONAL_BUILD_STATE='+$a.state)
+          Write-Host ('SKARVIK_FINAL_NEW_REGIONAL_REAL_MESH_ACTORS='+$a.newRoadActors)
+          Write-Host ('SKARVIK_FINAL_NEW_REGIONAL_ROAD_METRES='+$a.newPavedMetres)
+          Write-Host ('SKARVIK_FINAL_NEW_REGIONAL_REAL_FRAGMENTS='+$a.newPartialRoadFragments)
+          if($code -ne 0 -or $a.state -notin @('FINAL_NATIVE_COAST_AUTHENTIC_REGIONAL_SAFE_ROAD_FRAGMENTS_SAVED_NOT_DRIVEN_OR_CONNECTED',
+                'NO_NEW_COLLISION_FREE_REGIONAL_ASPHALT_AVAILABLE_WITHOUT_BRIDGES_OR_EARTHWORKS')){
+            throw ('Real regional native road execution failed: '+$a.error)
+          }
+          Write-Host 'SKARVIK_FINAL_NATIVE_REGIONAL_ROAD_BUILD_ATTEMPT_REPORTED=true'
+      - name: Independently reopen World Partition and verify saved genuine road mesh actors
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_FINAL_REGIONAL_BUILD_RESULT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-native-regional-fragment-build.json'
+          $env:SKARVIK_FINAL_REGIONAL_REOPEN_RESULT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-native-regional-fragment-reopen.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $src=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_final_safe_regional_road_fragments_v1.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$src" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_FINAL_REGIONAL_REOPEN_RESULT)){throw 'Native road reload report missing'}
+          $v=Get-Content -LiteralPath $env:SKARVIK_FINAL_REGIONAL_REOPEN_RESULT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_FINAL_REGIONAL_ROAD_REOPEN_STATE='+$v.state)
+          Write-Host ('SKARVIK_FINAL_REGIONAL_NATIVE_MESHES_RELOADED='+$v.nativePersistedActorCounts.newRegionalPilotAsphalt)
+          if($code -ne 0 -or $v.state -notin @('FINAL_NATIVE_AUTHENTIC_REGIONAL_ROAD_FRAGMENTS_PERSISTED_NOT_DRIVEN',
+                'FINAL_NATIVE_NO_SAFE_NEW_REGIONAL_FRAGMENTS_NOT_MODIFIED')){
+            throw ('Native World Partition regional road proof failed: '+$v.error)
+          }
+          Write-Host 'SKARVIK_FINAL_NATIVE_REGIONAL_MESH_REOPEN_VERIFIED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-final-native-real-regional-road-fragments-v1
+          path: |
+            skarvik-final-native-regional-fragment-build.json
+            skarvik-final-native-regional-fragment-reopen.json
+          if-no-files-found: warn

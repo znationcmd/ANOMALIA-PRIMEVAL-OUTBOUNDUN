@@ -1,0 +1,72 @@
+name: SKARVIK - author 3 real collision road mesh pilot routes
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-author-real-road-mesh-pilot.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-real-road-pilot:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Protect source maps and road assets and validate script syntax
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Invalid stage marker'}
+          if(!(Test-Path -LiteralPath 'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap')){throw 'Original D map missing'}
+          if(!(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'))){throw 'Staged SKARVIK terrain missing'}
+          foreach($d in @('Content\Crowd','Content\Vehicle')){if(Test-Path -LiteralPath (Join-Path $root $d)){throw 'CitySample simulation folder forbidden'}}
+          if(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\SKARVIK_ROADS_PILOT_v1.umap')){throw 'Do not overwrite pilot world'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval -ErrorAction SilentlyContinue).Count){throw 'Unreal editor process active'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ("SKARVIK_ROAD_PILOT_C_FREE_GIB={0:N2}" -f $free)
+          if($free -lt 17){throw 'Insufficient C disk reserve'}
+          $json=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $d=Get-Content -LiteralPath $json -Raw|ConvertFrom-Json
+          if(@($d.settlements).Count -ne 125 -or @($d.roads).Count -ne 382){throw 'Latest road spec missing'}
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_real_road_pilot.py'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'UE Python script compilation rejected'}
+          Write-Host 'SKARVIK_ROAD_PILOT_PREFLIGHT_PASSED=true'
+      - name: Author road mesh pilot with verified native height and collision, in separate WP map
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $env:SKARVIK_ROADS_PILOT_LAYOUT=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $env:SKARVIK_ROADS_PILOT_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-real-3d-road-pilot.json'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_real_road_pilot.py'
+          & $editor $project "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $rc=$LASTEXITCODE
+          if(!(Test-Path $env:SKARVIK_ROADS_PILOT_REPORT)){throw "No road pilot native result, exit=$rc"}
+          $data=Get-Content $env:SKARVIK_ROADS_PILOT_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_ROAD_PILOT_NATIVE_STATE='+$data.status)
+          Write-Host ('SKARVIK_ROAD_PILOT_NATIVE_MESH_ACTORS='+$data.physicalRoadMeshCount)
+          Write-Host ('SKARVIK_ROAD_PILOT_NATIVE_LENGTH_METRES='+$data.lengthMeters)
+          foreach($route in @($data.routes)){Write-Host ('SKARVIK_REAL_ROAD_ROUTE='+$route.id+' ACTORS='+$route.realMeshActors)}
+          if($rc -ne 0 -or $data.status -ne 'ISOLATED_NATIVE_3D_ROAD_PILOT_SAVED_NOT_PLAYTESTED' -or $data.physicalRoadMeshCount -lt 30){
+            throw ('Real road World Partition pilot did not pass: '+$data.error)
+          }
+          Write-Host 'SKARVIK_NATIVE_REAL_ROAD_WORLD_PILOT_SUCCESS=true'
+          Write-Host 'SKARVIK_ROAD_PILOT_NOT_ATTACHED_TO_MAIN_MAP_OR_SM5_DRIVEN=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-original-native-3d-road-pilot-report
+          path: skarvik-real-3d-road-pilot.json
+          if-no-files-found: warn
+          retention-days: 21

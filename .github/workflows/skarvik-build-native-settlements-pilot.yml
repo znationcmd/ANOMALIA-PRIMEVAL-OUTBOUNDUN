@@ -1,0 +1,73 @@
+name: SKARVIK - build first 5 real 3D settlements in isolated UE5 overlay
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-build-native-settlements-pilot.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  pilot:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Guard original and stage, validate compiler syntax and source plan
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Invalid stage marker'}
+          if(!(Test-Path -LiteralPath 'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap')){throw 'Original D map missing'}
+          if(!(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'))){throw '48 km native terrain missing'}
+          if(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\SKARVIK_SETTLEMENTS_PILOT_v1.umap')){throw 'Pilot world already exists; inspect before rerun'}
+          foreach($p in @('Content\Anomalia\Buildings\Lot1\SM_coastal_house_v1.uasset','Content\Anomalia\Buildings\Expansion1\SM_townhouse.uasset','Content\Anomalia\InteractiveRealismReview_v1\wood_house_enterable\SM_wood_house_enterable.uasset')){
+            if(!(Test-Path -LiteralPath (Join-Path $root $p))){throw "Owned 3D building source missing: $p"}
+          }
+          foreach($p in @('Crowd','Vehicle')){if(Test-Path -LiteralPath (Join-Path $root ('Content\'+$p))){throw 'Excluded CitySample asset folder present'}}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval -ErrorAction SilentlyContinue).Count){throw 'Another Unreal editor session running'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ("SKARVIK_NATIVE_PILOT_FREE_C_GIB={0:N2}" -f $free)
+          if($free -lt 18){throw 'C drive below 18GiB safe editor reserve'}
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          if(!(Test-Path -LiteralPath $python)){throw 'Bundled UE Python missing'}
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_settlements_native.py'
+          & $python -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'Native 125-site author script syntax invalid'}
+          $plan=Get-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json') -Raw|ConvertFrom-Json
+          if(@($plan.settlements).Count -ne 125){throw '125 settlement plan not present'}
+          Write-Host 'SKARVIK_NATIVE_PILOT_PREFLIGHT_OK=true'
+      - name: Construct real 3D houses for first five sites, save an isolated World Partition overlay
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $env:SKARVIK_SETTLEMENT_LAYOUT=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $env:SKARVIK_SETTLEMENT_AUTHOR_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-native-settlements-pilot.json'
+          $env:SKARVIK_SETTLEMENT_SITE_LIMIT='6'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_settlements_native.py'
+          & $editor $project "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_SETTLEMENT_AUTHOR_REPORT)){throw "No pilot UE report (exit $exit)"}
+          $data=Get-Content -LiteralPath $env:SKARVIK_SETTLEMENT_AUTHOR_REPORT -Raw|ConvertFrom-Json
+          Write-Host ("SKARVIK_PILOT_NATIVE_STATE="+$data.state)
+          Write-Host ("SKARVIK_PILOT_NATIVE_3D_HOUSES="+$data.buildingsPhysicallyPlaced)
+          Write-Host ("SKARVIK_PILOT_NATIVE_LOCALITIES="+$data.settlementsWithRealBuildings)
+          if($exit -ne 0 -or $data.state -ne 'PILOT_REAL_BUILDINGS_SAVED_NOT_PLAYTESTED'){throw ('UE5 pilot 3D author failed: '+$data.error)}
+          if($data.settlementsWithRealBuildings -ne 5 -or $data.buildingsPhysicallyPlaced -lt 20){throw 'Pilot does not contain five real 3D localities and sufficient actual mesh actors'}
+          Write-Host 'SKARVIK_PILOT_REAL_3D_BUILDINGS_SAVED=true'
+          Write-Host 'SKARVIK_PILOT_NOT_YET_ATTACHED_TO_MAIN_MAP_OR_PLAYTESTED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-native-real-3d-houses-pilot
+          path: skarvik-native-settlements-pilot.json
+          if-no-files-found: warn

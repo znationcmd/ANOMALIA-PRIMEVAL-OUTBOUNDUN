@@ -1,0 +1,79 @@
+name: SKARVIK - create playable Unreal 5.8 standalone TEST shortcut on desktop
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-create-native-playtest-shortcut.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  create-windows-native-playtest-shortcut:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Validate real world and create independent UE5 standalone GAME shortcut without starting UE
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          $project=Join-Path $stage 'AnomaliaZPrigimalia.uproject'
+          $finalMap=Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Wrong native stage: refused to create playtest shortcut'}
+          if(!(Test-Path -LiteralPath $project) -or !(Test-Path -LiteralPath $finalMap)){throw 'Final original seven-island map or UE project absent'}
+          $module=Join-Path $stage 'Binaries\Win64\UnrealEditor-AnomaliaZPrigimalia.dll'
+          if(!(Test-Path -LiteralPath $module)){throw 'Compiled UE5 C++ editor module missing; cannot promise standalone game launch'}
+          $candidateRoots=@($env:UE_ROOT,'C:\Program Files\Epic Games\UE_5.8','C:\Program Files\Epic Games\UE_5.8.3')
+          $editor=$null
+          foreach($root in $candidateRoots){
+            if(!$root){continue}
+            $exe=Join-Path $root 'Engine\Binaries\Win64\UnrealEditor.exe'
+            if(Test-Path -LiteralPath $exe){$editor=$exe;break}
+          }
+          if(!$editor){throw 'Installed UnrealEditor.exe is not available'}
+          $desktop=[Environment]::GetFolderPath('Desktop')
+          if(!(Test-Path -LiteralPath $desktop)){throw 'Windows desktop is unavailable'}
+          $shortcutPath=Join-Path $desktop 'ANOMALIAZ - JOUER SKARVIK TEST (UE5.8).lnk'
+          $shell=New-Object -ComObject WScript.Shell
+          if(Test-Path -LiteralPath $shortcutPath){
+            $existing=$shell.CreateShortcut($shortcutPath)
+            if($existing.TargetPath -ne $editor -or $existing.Arguments -notmatch 'PRIGIMALIA_SKARVIK_FINAL_v1'){
+              throw 'An unrelated shortcut has the destination name; refused overwrite'
+            }
+          }
+          $shortcut=$shell.CreateShortcut($shortcutPath)
+          $shortcut.TargetPath=$editor
+          # -game starts UE5 standalone GAME from the existing uncooked editor project,
+          # not the old missing Binaries/Win64/AnomaliaZPrigimalia.exe.
+          # Isolate world/server data under a test-only ID; keep original D: untouched.
+          $mapUrl='/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1?AnomaliaZPrigimaliaServerId=skarvik-playtest'
+          $shortcut.Arguments=('"'+$project+'" "'+$mapUrl+'" -game -windowed -ResX=1280 -ResY=720 -d3d11 -log')
+          $shortcut.WorkingDirectory=$stage
+          $shortcut.Description='Jeu test SKARVIK 48km / 7 iles. Mode GAME UE5.8 via UnrealEditor.exe. Pas une version Windows empaquetee.'
+          $shortcut.IconLocation=$editor+',0'
+          $shortcut.Save()
+          $verified=$shell.CreateShortcut($shortcutPath)
+          if(!(Test-Path -LiteralPath $shortcutPath) -or
+             $verified.TargetPath -ne $editor -or
+             $verified.Arguments -notmatch 'PRIGIMALIA_SKARVIK_FINAL_v1' -or
+             $verified.Arguments -notmatch ' -game ' -or
+             $verified.Arguments -notmatch 'skarvik-playtest' -or
+             $verified.Arguments -match '\.exe" -game'){
+            throw 'Saved shortcut verification failed'
+          }
+          Write-Host 'SKARVIK_STANDALONE_PLAYTEST_SHORTCUT_CREATED=true'
+          Write-Host ('SKARVIK_STANDALONE_PLAYTEST_SHORTCUT_NAME='+[IO.Path]::GetFileName($shortcutPath))
+          Write-Host 'SKARVIK_TEST_RUN_MODE=UnrealEditor.exe -game -d3d11 -windowed'
+          Write-Host 'SKARVIK_STANDALONE_COMPILED_EDITOR_MODULE_PRESENT=true'
+          Write-Host 'SKARVIK_TEST_PLAYABILITY_VERIFIED=false'
+          Write-Host 'SKARVIK_GAME_STARTED_BY_WORKFLOW=false'
+          Write-Host 'SKARVIK_USER_CURRENT_EDITOR_NOT_TERMINATED=true'
+          Write-Host 'SKARVIK_EXISTING_DESKTOP_SHORTCUTS_NOT_MODIFIED=true'
+          Write-Host 'SKARVIK_ORIGINAL_D_ANOMALIA_PRESERVED=true'

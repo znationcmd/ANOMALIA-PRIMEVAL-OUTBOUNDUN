@@ -1,0 +1,37 @@
+name: SKARVIK final 48km - coastal road connector candidate review
+on:
+  push:
+    paths:
+      - 'scripts/skarvik_design_missing_connectors.py'
+      - 'tests/test_skarvik_connector_candidates.py'
+      - '.github/workflows/skarvik-48km-next-connectors.yml'
+  pull_request:
+    paths:
+      - 'scripts/skarvik_design_missing_connectors.py'
+      - 'tests/test_skarvik_connector_candidates.py'
+      - '.github/workflows/skarvik-48km-next-connectors.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  review-existing-SKARVIK:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify preserved 125 towns, 382 roads, 7 islands and CitySample centre
+        run: |
+          python -m unittest discover -s tests -p 'test_skarvik_connector_candidates.py' -v
+          python -m py_compile scripts/skarvik_design_missing_connectors.py
+      - name: Export all original coast/road connector reviews
+        run: |
+          python scripts/skarvik_design_missing_connectors.py --out /tmp/SKARVIK_48KM_NEW_CONNECTORS_REVIEW
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SKARVIK-48KM-125-TOWNS-236-ROUTE-GAPS-NEXT-REVIEW
+          path: /tmp/SKARVIK_48KM_NEW_CONNECTORS_REVIEW/
+          retention-days: 30
+          if-no-files-found: error

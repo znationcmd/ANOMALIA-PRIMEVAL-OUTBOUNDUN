@@ -1,0 +1,84 @@
+name: SKARVIK - build 3 genuine 3D village nuclei in isolated 48km UE5 world
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-author-three-real-villages.yml', 'unreal/Scripts/author_skarvik_3_real_village_pilots.py']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  build-village-pilots:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Confirm safe C staging, 125-site layout, original D map and 3D sources
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $source='D:\ANOMALIA\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or ((Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555')){throw 'Untrusted stage marker'}
+          if(!(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'))){throw 'Native 48km stage world missing'}
+          if(!(Test-Path -LiteralPath (Join-Path $source 'Content\Maps\ANOMALIA_Archipelago_v2.umap'))){throw 'Protected original D map missing'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Other UE editor instance running'}
+          if((([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB) -lt 18){throw 'C below 18 GiB safety headroom'}
+          foreach($p in @('Content\Anomalia\Buildings\Lot1\SM_coastal_house_v1.uasset','Content\Anomalia\Buildings\Expansion1\SM_townhouse.uasset','Content\Anomalia\InteractiveRealismReview_v1\wood_house_enterable\SM_wood_house_enterable.uasset')){
+            if(!(Test-Path -LiteralPath (Join-Path $root $p))){throw "Genuine ANOMALIA asset missing: $p"}
+          }
+          foreach($name in @('Crowd','Vehicle')){
+            if(Test-Path -LiteralPath (Join-Path $root ('Content\'+$name))){throw 'Excluded City Sample simulation detected'}
+          }
+          $spec=Get-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json') -Raw|ConvertFrom-Json
+          if(@($spec.settlements).Count -ne 125){throw 'Must preserve 125 localities'}
+          if(@($spec.roads).Count -lt 124){throw 'Connected route plan is incomplete'}
+          $env:SKARVIK_ORIGINAL_MAP_SHA256=(Get-FileHash -LiteralPath (Join-Path $source 'Content\Maps\ANOMALIA_Archipelago_v2.umap') -Algorithm SHA256).Hash
+          Write-Host 'SKARVIK_REAL_VILLAGES_PREFLIGHT_SUCCESS=true'
+      - name: Verify Python authoring script syntax
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_3_real_village_pilots.py'
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          if(!(Test-Path -LiteralPath $py)){$py=(Get-Command py -ErrorAction Stop).Source}
+          & $py -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'Python pilot invalid: do not load world'}
+          Write-Host 'SKARVIK_REAL_VILLAGE_PYTHON_SYNTAX_OK=true'
+      - name: Insert 27 real ANOMALIA 3D buildings across 3 original villages in isolated SKARVIK
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_LAYOUT_JSON=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $env:SKARVIK_NATIVE_PILOT_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-real-village-pilot-result.json'
+          $py=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_3_real_village_pilots.py'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          & $editor $project "-ExecutePythonScript=$py" -nullrhi -unattended -nopause -nosound
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_NATIVE_PILOT_REPORT)){throw "Unreal did not write pilot JSON exit=$exit"}
+          $data=Get-Content $env:SKARVIK_NATIVE_PILOT_REPORT -Raw|ConvertFrom-Json
+          if($exit -ne 0 -or $data.state -ne 'THREE_GENUINE_3D_VILLAGE_NUCLEI_SAVED_NOT_SM5_PLAYTESTED' -or $data.actorsSaved -ne 27){
+            throw ("Unreal pilot did not save successfully: "+$data.error+" exit="+$exit)
+          }
+          if(@($data.villages).Count -ne 3){throw 'Village pilot count incorrect'}
+          $original='D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          if(!(Test-Path -LiteralPath $original)){throw 'Protected original missing after pilot'}
+          Write-Host 'SKARVIK_THREE_VILLAGES_WITH_27_REAL_3D_BUILDINGS_SAVED=true'
+          Write-Host 'SKARVIK_ROADS_AND_122_OTHER_SITES_NOT_YET_BUILT=true'
+          Write-Host 'SKARVIK_UE5_SM5_GAMEPLAY_NOT_YET_TESTED=true'
+      - name: Upload small factual report only, never copyrighted City Sample binaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skarvik-three-3d-village-nuclei-report
+          if-no-files-found: warn
+          path: skarvik-real-village-pilot-result.json
+          retention-days: 30

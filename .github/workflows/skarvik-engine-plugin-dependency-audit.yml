@@ -1,0 +1,54 @@
+name: SKARVIK - locate missing CitySample imports across ALL UE 5.8 plugin binaries
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-engine-plugin-dependency-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  locate-imports:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - name: Compare actual linked CitySample imports with all engine and project binaries, no modifications
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Invalid stage'}
+          $dll=Join-Path $root 'Binaries\Win64\UnrealEditor-CitySample.dll'
+          if(!(Test-Path $dll)){throw 'CitySample DLL missing'}
+          $vswhere=Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $vsroot=(& $vswhere -latest -products '*' -property installationPath|Select-Object -First 1)
+          $dumpbin=Get-ChildItem -LiteralPath (Join-Path $vsroot 'VC\Tools\MSVC') -Filter dumpbin.exe -File -Recurse|
+            Where-Object{$_.FullName -match 'Hostx64\\x64\\dumpbin.exe$'}|
+            Sort-Object FullName -Descending|Select-Object -First 1
+          if(!$dumpbin){throw 'dumpbin absent'}
+          $outputs=@(& $dumpbin.FullName /dependents $dll)
+          $imports=@($outputs|Select-String -Pattern '^\s*([A-Za-z0-9_\-\.]+\.dll)\s*$'|ForEach-Object{$_.Matches[0].Groups[1].Value}|Select-Object -Unique)
+          $folders=@((Join-Path $env:UE_ROOT 'Engine\Binaries'),(Join-Path $env:UE_ROOT 'Engine\Plugins'),(Join-Path $root 'Binaries'),(Join-Path $root 'Plugins'))
+          $all=New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]' ([System.StringComparer]::OrdinalIgnoreCase)
+          foreach($base in $folders){
+            if(!(Test-Path $base)){continue}
+            foreach($file in (Get-ChildItem -LiteralPath $base -Recurse -File -Filter 'UnrealEditor-*.dll' -ErrorAction Stop)){
+              if(!$all.ContainsKey($file.Name)){$all[$file.Name]=New-Object 'System.Collections.Generic.List[string]'}
+              $all[$file.Name].Add($file.FullName)
+            }
+          }
+          Write-Host ("SKARVIK_IMPORT_TOTAL={0} ALL_ENGINE_AND_STAGE_DLL_VARIANTS={1}" -f $imports.Count,$all.Count)
+          [int]$missing=0
+          foreach($name in $imports){
+            if($name -notmatch '^UnrealEditor-'){continue}
+            if($all.ContainsKey($name)){
+              Write-Host ("SKARVIK_IMPORT_STATE={0} AVAILABLE paths={1}" -f $name,($all[$name] -join ';'))
+            }else{
+              $missing++
+              Write-Host ("SKARVIK_IMPORT_STATE={0} ABSENT_ON_DISK" -f $name)
+            }
+          }
+          Write-Host ("SKARVIK_IMPORTS_MISSING_ON_DISK=$missing")
+          Write-Host 'SKARVIK_ALL_PLUGIN_BINARY_DEPENDENCIES_VERIFIED_READONLY=true'

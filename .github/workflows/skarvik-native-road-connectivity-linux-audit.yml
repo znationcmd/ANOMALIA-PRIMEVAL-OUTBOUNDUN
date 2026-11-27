@@ -1,0 +1,91 @@
+name: SKARVIK - verify regional road continuity and planned village gateways without Windows
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-native-road-connectivity-linux-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  native-evidence-road-graph:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-road-expansion-real-3d-graded-20-candidates
+          run-id: 41237712368
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts/b1
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-native-grade-asphalt-batch-b2-40
+          run-id: 41241110645
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts/b2
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-native-grade-asphalt-batch-c3-40
+          run-id: 41244111536
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts/c3
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-real-native-road-gap-repair-and-remaining-defects
+          run-id: 41245941890
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts/gaps
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-real-ue5-switchback-grade-and-road-surface-proof
+          run-id: 41246595152
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts/switchback
+      - name: Validate graph algorithm and verify exact Windows Unreal build receipts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/audit_skarvik_native_road_connections.py --test
+          python3 scripts/audit_skarvik_native_road_connections.py \
+            --layout public/config/skarvik-world-layout-48km.json \
+            --transport public/config/skarvik-transport-network-v2.json \
+            --b1 \
+            receipts/b1/skarvik-real-asphalt-expansion-report.json \
+            --b2 \
+            receipts/b2/skarvik-40-asphalt-batch-b2.json \
+            --c3 \
+            receipts/c3/skarvik-40-asphalt-batch-c3.json \
+            --gaps \
+            receipts/gaps/skarvik-gapfix-short-road-3d-results.json \
+            --switchback \
+            receipts/switchback/skarvik-real-native-switchback-road-actors.json \
+            --out artifacts/skarvik-road-connectivity-evidence.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('artifacts/skarvik-road-connectivity-evidence.json',encoding='utf-8'))
+          s=d['summary']
+          assert s['plannedInterSettlementRoadCount']==382
+          assert s['pavedRouteCorridorsWithReceipts']==100
+          assert s['remainingSkippedBaseTiles']==182
+          assert s['batchesWithReportedNoInternalGaps'] >= 80
+          assert s['physicallyPavedRouteRoadToTownGatewaysCertified']==0
+          assert s['SM5DriveabilityAndContinuousPhysicalRoadNetworkVerified'] is False
+          print('SKARVIK_NATIVE_ROAD_CONNECTIVITY_MANIFEST_VERIFIED=true')
+          print('SKARVIK_PLANNED_COMPONENT_COUNT='+str(s['fullPlannedRoadGraphComponents']))
+          print('SKARVIK_CONCEPTUAL_NATIVE_ROUTE_COMPONENT_COUNT='+str(s['pavedRouteTopologicalComponentsIgnoringPhysicalGaps']))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-native-road-graph-382-planned-100-actual-gateway-audit
+          path: artifacts/skarvik-road-connectivity-evidence.json
+          if-no-files-found: warn

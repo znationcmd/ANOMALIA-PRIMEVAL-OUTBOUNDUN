@@ -1,0 +1,93 @@
+name: SKARVIK - fix CitySample linker UMG and ChaosVehicles on UE5.8
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-fix-citysample-linker.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  compile:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - name: Guard isolated project, backup and original
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted stage'}
+          foreach($relative in @('AnomaliaZPrigimalia.uproject','Source\CitySample\CitySample.Build.cs','Source\CitySampleAnimGraphRuntime\CitySampleAnimGraphRuntime.Build.cs','Plugins\Crossfader\Crossfader.uplugin','Plugins\RuleProcessor\RuleProcessor.uplugin','Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap')){
+            if(!(Test-Path -LiteralPath (Join-Path $root $relative))){throw "Missing stage dependency $relative"}
+          }
+          if(!(Test-Path -LiteralPath 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject')){throw 'Original D project missing'}
+          foreach($f in @('Crowd','Vehicle')){if(Test-Path -LiteralPath (Join-Path $root ('Content\'+$f))){throw "Excluded content $f detected"}}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval -ErrorAction SilentlyContinue).Count){throw 'Another Unreal process is active'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ("SKARVIK_LINKER_PRE_FREE_GIB={0:N2}" -f $free)
+          if($free -lt 20){throw 'Not enough free C drive space'}
+          if(!(Test-Path -LiteralPath (Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'))){throw 'UE5.8 Build.bat missing'}
+          Write-Host 'SKARVIK_LINKER_STAGE_PREFLIGHT_OK=true'
+      - name: Patch required UMG and ChaosVehicles module links in isolated C source
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $module=Join-Path $root 'Source\CitySample\CitySample.Build.cs'
+          $backup=Join-Path $root 'Saved\SkarvikCity\LinkerFix'
+          if(Test-Path -LiteralPath $backup){throw 'Previous linker-fix backup detected: stop to avoid overwriting'}
+          New-Item -ItemType Directory -Path $backup -Force|Out-Null
+          Copy-Item -LiteralPath $project -Destination (Join-Path $backup 'AnomaliaZPrigimalia.uproject')
+          Copy-Item -LiteralPath $module -Destination (Join-Path $backup 'CitySample.Build.cs')
+          $code=[IO.File]::ReadAllText($module)
+          $anchor='PublicDependencyModuleNames.AddRange(new string[]'
+          if(!$code.Contains($anchor)){throw 'CitySample Build.cs does not match audited source structure'}
+          if($code -notmatch '"UMG"'){
+            $code=$code.Replace($anchor,'PublicDependencyModuleNames.Add("UMG");'+[Environment]::NewLine+'        '+$anchor)
+            Write-Host 'SKARVIK_LINK_MODULE_ADDED=UMG'
+          }
+          if($code -notmatch '"ChaosVehicles"'){
+            $code=$code.Replace($anchor,'PublicDependencyModuleNames.Add("ChaosVehicles");'+[Environment]::NewLine+'        '+$anchor)
+            Write-Host 'SKARVIK_LINK_MODULE_ADDED=ChaosVehicles'
+          }
+          if($code -notmatch '"UMG"' -or $code -notmatch '"ChaosVehicles"'){throw 'Required linker modules not added'}
+          [IO.File]::WriteAllText($module,$code,(New-Object System.Text.UTF8Encoding($false)))
+          $data=Get-Content -LiteralPath $project -Raw|ConvertFrom-Json
+          foreach($name in @('CitySample','CitySampleAnimGraphRuntime')){
+            if(!@($data.Modules|Where-Object{$_.Name -eq $name}).Count){
+              $data.Modules=@($data.Modules)+@([pscustomobject]@{Name=$name;Type='Runtime';LoadingPhase='Default'})
+            }
+          }
+          foreach($name in @('RuleProcessor','Crossfader','Traffic','CitySampleMassCrowd','HoverDrone','WorldAudioDataSystem','Soundscape','MassGameplay','MassAI','MassCrowd','StateTree','ZoneGraph','MotionWarping','ContextualAnimation','AnimToTexture','HairStrands','ModularGameplay','OnlineSubsystem','NetworkPrediction')){
+            if(!@($data.Plugins|Where-Object{$_.Name -eq $name}).Count){
+              $data.Plugins=@($data.Plugins)+@([pscustomobject]@{Name=$name;Enabled=$true})
+            }
+          }
+          [IO.File]::WriteAllText($project,($data|ConvertTo-Json -Depth 32),(New-Object System.Text.UTF8Encoding($false)))
+          Write-Host 'SKARVIK_CITYSAMPLE_LINK_MODULES_PATCHED_ON_C_ONLY=true'
+      - name: Compile native UE5.8 editor with fixed UMG and ChaosVehicles linkage
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\AnomaliaZPrigimalia.uproject'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          & $build AnomaliaZPrigimaliaEditor Win64 Development $project -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
+          if($LASTEXITCODE -ne 0){throw "UE5.8 CitySample native module build failed exit=$LASTEXITCODE"}
+          Write-Host 'SKARVIK_CITYSAMPLE_LINKER_FIX_BUILD_SUCCESS=true'
+          Write-Host 'SKARVIK_CITY_NATIVE_WORLD_NOT_YET_LINKED_OR_PLAYTESTED=true'
+      - name: Roll back staged descriptor and source if compile failed
+        if: failure()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $backup=Join-Path $root 'Saved\SkarvikCity\LinkerFix'
+          $p=Join-Path $backup 'AnomaliaZPrigimalia.uproject'
+          $m=Join-Path $backup 'CitySample.Build.cs'
+          if(Test-Path -LiteralPath $p){Copy-Item -LiteralPath $p -Destination (Join-Path $root 'AnomaliaZPrigimalia.uproject') -Force;Write-Host 'SKARVIK_LINKER_UPROJECT_ROLLBACK=true'}
+          if(Test-Path -LiteralPath $m){Copy-Item -LiteralPath $m -Destination (Join-Path $root 'Source\CitySample\CitySample.Build.cs') -Force;Write-Host 'SKARVIK_LINKER_BUILDCS_ROLLBACK=true'}
+          Write-Host 'SKARVIK_ORIGINAL_D_PROJECT_UNTOUCHED=true'

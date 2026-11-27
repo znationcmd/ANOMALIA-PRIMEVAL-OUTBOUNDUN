@@ -1,0 +1,69 @@
+name: SKARVIK - attach three real roads to populated graded 48km main world
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-add-three-real-roads-to-graded-world.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  real-roads-on-graded:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Preflight original, graded terrain, 124 building groups and C safety reserve
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong native stage'}
+          foreach($p in @(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\BeforePopulatingGradedV2\graded-v2-clean.umap'))){
+            if(!(Test-Path -LiteralPath $p)){throw "Protected or already-generated world absent: $p"}
+          }
+          if(Test-Path -LiteralPath (Join-Path $root 'Saved\SkarvikCity\BeforeGradedRoadMeshes\graded-with-houses-no-roads.umap')){throw 'Road addition already attempted; no overwrite'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal editor running'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ('SKARVIK_THREE_ROADS_GRADED_FREE_C_GIB='+[math]::Round($free,2))
+          if($free -lt 18){throw 'Not enough C disk space for safe 3D road work'}
+          Write-Host 'SKARVIK_THREE_REAL_ROADS_GRADED_PREFLIGHT_OK=true'
+      - name: Put native road meshes on landscape with 1039 buildings, leaving other maps untouched
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\add_skarvik_three_real_roads_to_graded_v2.py'
+          & $python -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw '3-route real mesh Python source not valid'}
+          $env:SKARVIK_ROADS_PILOT_LAYOUT=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $env:SKARVIK_ROADS_PILOT_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-graded-native-3-road-actors.json'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_ROADS_PILOT_REPORT)){throw 'Missing native 3-route report'}
+          $data=Get-Content -LiteralPath $env:SKARVIK_ROADS_PILOT_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_GRADED_3_ROAD_STATE='+$data.status)
+          Write-Host ('SKARVIK_GRADED_3_ROAD_MESH_ACTORS='+$data.physicalRoadMeshCount)
+          Write-Host ('SKARVIK_GRADED_3_ROAD_LENGTH_METRES='+$data.lengthMeters)
+          if($code -ne 0 -or $data.status -ne 'GRADED_48KM_WORLD_WITH_3_REAL_ROAD_SEGMENTS_SAVED_NOT_DRIVEN' -or $data.physicalRoadMeshCount -lt 30){
+            throw ('Native graded road integration incomplete: '+$data.error)
+          }
+          Write-Host 'SKARVIK_GRADED_THREE_REAL_ROADS_SAVED_TO_SAME_WORLD_AS_124_SITES=true'
+          Write-Host 'SKARVIK_FULL_ROAD_NETWORK_AND_DRIVE_TEST_PENDING=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-graded-48km-three-real-roads
+          path: skarvik-graded-native-3-road-actors.json
+          if-no-files-found: warn

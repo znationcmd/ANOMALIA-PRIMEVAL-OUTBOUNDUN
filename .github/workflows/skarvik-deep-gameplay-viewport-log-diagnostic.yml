@@ -1,0 +1,87 @@
+name: SKARVIK - deep read-only diagnosis of gameplay map load and World Partition streaming
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-deep-gameplay-viewport-log-diagnostic.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-live-map-diagnostics:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Inspect real UE5 live -game log without interrupting process or touching worlds
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          if(!(Test-Path $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted project'}
+          $game=@(Get-CimInstance Win32_Process | Where-Object {
+            $_.Name -eq 'UnrealEditor.exe' -and
+            $_.CommandLine -match '(?i)(?:^|\s)-game(?:\s|$)' -and
+            $_.CommandLine -match 'PRIGIMALIA_SKARVIK_FINAL_v1' -and
+            $_.CommandLine -match 'ANOMALIAZ_SKARVIK_STAGE_41188816555'
+          })
+          $logDir=Join-Path $stage 'Saved\Logs'
+          $log=Get-ChildItem -LiteralPath $logDir -Filter '*.log' -File -ErrorAction Stop |
+             Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
+          if(!$log){throw 'No native UE game log'}
+          $records=New-Object 'System.Collections.Generic.List[string]'
+          $warning=New-Object 'System.Collections.Generic.List[string]'
+          $counts=@{}
+          $regex='(?i)LogLoad:|LogWorldPartition|LogLandscape|LogGameMode|GameMode|PlayerStart|Spawn.*(Player|Pawn)|BeginPlay|MapName|LogStreaming|LogWorld:|LogLevel:|LogRenderer|LogShader|LogMaterial|LogStaticMesh|LogWindows: Error|Fatal|Failed to load|Failed to find|No PlayerStart|LogInit: Display: Engine Version|LogRHI|LogRenderer:|LogNavMesh|Warning:.*(Load|Map|World|Asset|Landscape|Player|Collision|Spawn|Render|Shader)'
+          Get-Content -LiteralPath $log.FullName -ReadCount 500 -ErrorAction Stop | ForEach-Object {
+            foreach($line in $_){
+              if($line -match 'MovingVehicleColorPoint'){continue}
+              if($line -match $regex){
+                $text=[string]$line
+                $text=$text -replace 'C:[/\\]Users[/\\][^/\\ ]+[/\\]','C:/Users/<redacted>/'
+                if($text.Length -gt 500){$text=$text.Substring(0,500)}
+                $tag=$(if($text -match '\]([A-Za-z0-9_]+):'){ $Matches[1] }else{'other'})
+                $counts[$tag]=1+[int]$counts[$tag]
+                $records.Add($text)
+              }elseif($line -match '(?i)Error:|Warning:'){
+                $text=[string]$line
+                $text=$text -replace 'C:[/\\]Users[/\\][^/\\ ]+[/\\]','C:/Users/<redacted>/'
+                if($text.Length -gt 300){$text=$text.Substring(0,300)}
+                if($warning.Count -lt 60){$warning.Add($text)}
+              }
+            }
+          }
+          $first=@($records|Select-Object -First 110)
+          $last=@($records|Select-Object -Last 150)
+          $output=[ordered]@{
+            state='READONLY_FULL_GAME_LOG_ROOT_CAUSE_AUDIT'
+            capturedUTC=[DateTime]::UtcNow.ToString('o')
+            activeRealSkarvikGameProcess=$($game.Count -gt 0)
+            gameProcessCount=$game.Count
+            logLastWriteUTC=$log.LastWriteTimeUtc.ToString('o')
+            fullLogBytes=$log.Length
+            relevantLineCount=$records.Count
+            messagesByCategory=$counts
+            firstImportantLines=$first
+            lastImportantLines=$last
+            firstOtherWarnings=$warning
+            noFilesOrProcessesChanged=$true
+          }
+          $out=Join-Path $env:GITHUB_WORKSPACE 'skarvik-deep-gameplay-render-diagnostic.json'
+          ($output|ConvertTo-Json -Depth 8)|Set-Content -LiteralPath $out -Encoding utf8
+          Write-Host ('SKARVIK_GAME_PROCESS_RUNNING='+$output.activeRealSkarvikGameProcess)
+          Write-Host ('SKARVIK_RELEVANT_UE_LOG_LINES='+$output.relevantLineCount)
+          foreach($line in @($last|Select-Object -Last 36)){Write-Host ('SKARVIK_REAL_GAME_DIAG='+$line)}
+          Write-Host 'SKARVIK_DEEP_GAMEPLAY_DIAG_CHANGED_ORIGINAL_ASSETS=false'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-real-game-deep-worldpartition-render-log-diagnostic
+          path: skarvik-deep-gameplay-render-diagnostic.json
+          if-no-files-found: warn

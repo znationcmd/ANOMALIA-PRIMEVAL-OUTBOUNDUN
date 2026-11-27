@@ -7,6 +7,11 @@
 #include "AnomaliaZPrigimaliaConfigLibrary.h"
 #include "Dom/JsonObject.h"
 #include "Engine/World.h"
+#include "Engine/StaticMesh.h"
+#include "Components/StaticMeshComponent.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/Pawn.h"
+#include "NavigationSystem.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerStart.h"
 #include "Misc/DateTime.h"
@@ -106,7 +111,16 @@ void UAnomaliaZPrigimaliaLootSubsystem::Tick(float DeltaTime)
     Accumulator = 0;
     FString Error;
     if (!RecoverPending(Error)) return; // Keep inventory and point locked until durable completion.
-    if (bReady && GetWorld()->HasBegunPlay()) RefreshLoot();
+    if (bReady && GetWorld()->HasBegunPlay())
+    {
+        BuildingDiscoveryAccumulator += DeltaTime;
+        if (BuildingDiscoveryAccumulator >= 5.f)
+        {
+            BuildingDiscoveryAccumulator = 0.f;
+            DiscoverNearbyBuildingSpawns();
+        }
+        RefreshLoot();
+    }
 }
 
 bool UAnomaliaZPrigimaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error, bool Append)
@@ -406,6 +420,186 @@ bool UAnomaliaZPrigimaliaLootSubsystem::RecoverPending(FString& Error)
     return true;
 }
 
+void UAnomaliaZPrigimaliaLootSubsystem::DiscoverNearbyBuildingSpawns()
+{
+    // SKARVIK only: City Sample modular wall/prop pieces are intentionally excluded.
+    // Loot registers only where a real building actor has a nearby NavMesh point
+    // inside its own mesh bounds. No arbitrary world coordinates are used.
+    if (!bReady || !State.IsValid() || !GetWorld() ||
+        GetWorld()->GetNetMode() == NM_Client ||
+        MapName != TEXT("PRIGIMALIA_SKARVIK_FINAL_v1") ||
+        Spawns.Num() >= 4096)
+        return;
+
+    UNavigationSystemV1* Navigation = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+    if (!Navigation) return;
+
+    TArray<FVector> PlayerLocations;
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    {
+        const APlayerController* PC = It->Get();
+        const APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+        if (Pawn) PlayerLocations.Add(Pawn->GetActorLocation());
+    }
+    if (PlayerLocations.IsEmpty()) return;
+
+    TSet<FString> ExistingIds;
+    ExistingIds.Reserve(Spawns.Num());
+    for (const FAnomaliaZPrigimaliaLootSpawn& Existing : Spawns)
+        ExistingIds.Add(Existing.Id);
+
+    const auto Points = State->GetObjectField(TEXT("points"));
+    bool bAdded = false;
+    int32 AddedThisPass = 0;
+    constexpr int32 MaxAddedPerPass = 48;
+    constexpr int32 MaxPointsPerBuilding = 2;
+    const FString SitePrefix = TEXT("SKARVIK_SITE_");
+
+    for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+    {
+        if (AddedThisPass >= MaxAddedPerPass || Spawns.Num() >= 4096) break;
+        AActor* Building = *It;
+        if (!IsValid(Building) || !Building->Tags.Contains(FName(TEXT("SKARVIK_FINAL_MIGRATED_SOURCE_ACTOR"))))
+            continue;
+
+        const UStaticMeshComponent* MeshComponent = Building->FindComponentByClass<UStaticMeshComponent>();
+        const UStaticMesh* Mesh = MeshComponent ? MeshComponent->GetStaticMesh() : nullptr;
+        if (!Mesh) continue;
+
+        const FString MeshName = Mesh->GetName();
+        FString BuildingType;
+        if (MeshName.Contains(TEXT("wood_house_enterable")) ||
+            MeshName.Contains(TEXT("coastal_house")) ||
+            MeshName.Contains(TEXT("townhouse")))
+            BuildingType = TEXT("house");
+        else if (MeshName.Contains(TEXT("garage")))
+            BuildingType = TEXT("garage");
+        else if (MeshName.Contains(TEXT("farm_barn")) || MeshName.Contains(TEXT("fire_station")))
+            BuildingType = TEXT("warehouse");
+        else if (MeshName.Contains(TEXT("police_station")))
+            BuildingType = TEXT("police");
+        else if (MeshName.Contains(TEXT("hospital")))
+            BuildingType = TEXT("hospital");
+        else if (MeshName.Contains(TEXT("residence_4floors")) || MeshName.Contains(TEXT("hlm_8floors")))
+            BuildingType = TEXT("city");
+
+        if (BuildingType.IsEmpty() || !BuildingTiers.Contains(BuildingType))
+            continue;
+
+        FString POIId;
+        for (const FName& Tag : Building->Tags)
+        {
+            const FString TagText = Tag.ToString();
+            if (TagText.StartsWith(SitePrefix))
+            {
+                POIId = TagText.RightChop(SitePrefix.Len());
+                break;
+            }
+        }
+        if (POIId.IsEmpty() || !LootSafeId(POIId)) continue;
+
+        bool bNearPlayer = false;
+        const FVector BuildingLocation = Building->GetActorLocation();
+        for (const FVector& PlayerLocation : PlayerLocations)
+        {
+            if (FVector::DistSquared(BuildingLocation, PlayerLocation) <= FMath::Square(3000.f))
+            {
+                bNearPlayer = true;
+                break;
+            }
+        }
+        if (!bNearPlayer) continue;
+
+        const FString Identity = Building->GetPathName() + TEXT("|") + POIId;
+        FTCHARToUTF8 EncodedIdentity(*Identity);
+        const FString StableHash = FSHA1::HashBuffer(EncodedIdentity.Get(), EncodedIdentity.Length()).ToString().ToLower();
+        const FBox LocalBounds = Mesh->GetBoundingBox();
+        if (!LocalBounds.IsValid) continue;
+        const FVector Extent = LocalBounds.GetExtent();
+        const FVector Center = LocalBounds.GetCenter();
+        const float FloorProbeZ = LocalBounds.Min.Z + FMath::Clamp(Extent.Z * 0.08f, 30.f, 90.f);
+        const FTransform ComponentTransform = MeshComponent->GetComponentTransform();
+        const FBox WorldBounds = MeshComponent->Bounds.GetBox();
+
+        const TArray<FVector> Offsets = {
+            FVector::ZeroVector,
+            FVector(Extent.X * 0.22f, 0.f, 0.f),
+            FVector(-Extent.X * 0.22f, 0.f, 0.f),
+            FVector(0.f, Extent.Y * 0.22f, 0.f),
+            FVector(0.f, -Extent.Y * 0.22f, 0.f)
+        };
+
+        int32 AddedForBuilding = 0;
+        for (int32 CandidateIndex = 0; CandidateIndex < Offsets.Num() &&
+             AddedForBuilding < MaxPointsPerBuilding && AddedThisPass < MaxAddedPerPass; ++CandidateIndex)
+        {
+            const FString SpawnId = FString::Printf(TEXT("sk-%s-%d"), *StableHash.Left(20), CandidateIndex);
+            if (ExistingIds.Contains(SpawnId)) continue;
+
+            const FVector LocalCandidate(Center.X + Offsets[CandidateIndex].X,
+                                         Center.Y + Offsets[CandidateIndex].Y,
+                                         FloorProbeZ);
+            const FVector Candidate = ComponentTransform.TransformPosition(LocalCandidate);
+            FNavLocation Projected;
+            if (!Navigation->ProjectPointToNavigation(Candidate, Projected, FVector(100.f, 100.f, 180.f)))
+                continue;
+            if (FVector::DistSquared(Projected.Location, Candidate) > FMath::Square(85.f) ||
+                !WorldBounds.IsInside(Projected.Location))
+                continue;
+
+            const FVector ProjectedLocal = ComponentTransform.InverseTransformPosition(Projected.Location);
+            if (ProjectedLocal.X < LocalBounds.Min.X || ProjectedLocal.X > LocalBounds.Max.X ||
+                ProjectedLocal.Y < LocalBounds.Min.Y || ProjectedLocal.Y > LocalBounds.Max.Y ||
+                ProjectedLocal.Z < LocalBounds.Min.Z - 20.f || ProjectedLocal.Z > LocalBounds.Max.Z)
+                continue;
+
+            const FVector SpawnLocation = Projected.Location + FVector(0.f, 0.f, 22.f);
+            FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AnomaliaSkarvikLootPlacement), false);
+            QueryParams.AddIgnoredActor(Building);
+            if (GetWorld()->OverlapBlockingTestByChannel(
+                    SpawnLocation, FQuat::Identity, ECC_WorldStatic,
+                    FCollisionShape::MakeSphere(16.f), QueryParams))
+                continue;
+
+            FAnomaliaZPrigimaliaLootSpawn Spawn;
+            Spawn.Id = SpawnId;
+            Spawn.BuildingType = BuildingType;
+            Spawn.POIId = POIId;
+            Spawn.Location = SpawnLocation;
+            Spawn.Tier = BuildingTiers.FindRef(BuildingType);
+            Spawns.Add(Spawn);
+            ExistingIds.Add(SpawnId);
+
+            if (!Points->HasField(SpawnId))
+            {
+                auto Row = MakeShared<FJsonObject>();
+                Row->SetStringField(TEXT("itemId"), TEXT(""));
+                Row->SetStringField(TEXT("generation"), TEXT(""));
+                Row->SetNumberField(TEXT("count"), 0);
+                Row->SetNumberField(TEXT("availableAt"), 0);
+                Row->SetNumberField(TEXT("expiresAt"), 0);
+                Points->SetObjectField(SpawnId, Row);
+            }
+            bAdded = true;
+            ++AddedForBuilding;
+            ++AddedThisPass;
+        }
+    }
+
+    if (bAdded)
+    {
+        FString Error;
+        if (!Persist(Error))
+        {
+            bReady = false;
+            UE_LOG(LogTemp, Error, TEXT("ANOMALIA SKARVIK building loot discovery suspended: %s"), *Error);
+            return;
+        }
+        UE_LOG(LogTemp, Display, TEXT("ANOMALIA SKARVIK building loot points added this pass: %d (total %d)"),
+               AddedThisPass, Spawns.Num());
+    }
+}
+
 void UAnomaliaZPrigimaliaLootSubsystem::RefreshLoot()
 {
     if (!bReady || !GetWorld() || GetWorld()->GetNetMode() == NM_Client || State->HasField(TEXT("pending"))) return;
@@ -467,9 +661,26 @@ void UAnomaliaZPrigimaliaLootSubsystem::SyncActors()
     const auto Points = State->GetObjectField(TEXT("points"));
     for (const auto& Spawn : Spawns)
     {
+        auto& Weak = Pickups.FindOrAdd(Spawn.Id);
+        if (MapName == TEXT("PRIGIMALIA_SKARVIK_FINAL_v1"))
+        {
+            bool bNearPlayer = false;
+            for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+            {
+                const APlayerController* PC = It->Get();
+                const APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+                if (Pawn && FVector::DistSquared(Pawn->GetActorLocation(), Spawn.Location) <= FMath::Square(4000.f))
+                { bNearPlayer = true; break; }
+            }
+            if (!bNearPlayer)
+            {
+                if (Weak.IsValid()) Weak->Destroy();
+                Weak.Reset();
+                continue;
+            }
+        }
         const auto Row = Points->GetObjectField(Spawn.Id);
         const FName Id(*Row->GetStringField(TEXT("itemId")));
-        auto& Weak = Pickups.FindOrAdd(Spawn.Id);
         const auto* Item = FindItem(Id);
         if (Weak.IsValid() && (Id.IsNone() || Weak->Generation != Row->GetStringField(TEXT("generation"))))
         { Weak->Destroy(); Weak.Reset(); }

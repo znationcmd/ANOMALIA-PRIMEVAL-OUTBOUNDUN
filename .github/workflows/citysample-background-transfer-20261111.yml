@@ -1,0 +1,199 @@
+name: CITY SAMPLE - move cloud transfer off the UE5 build runner
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/citysample-background-transfer-20261111.yml']
+permissions:
+  contents: read
+  actions: write
+concurrency:
+  group: anomalia-citysample-background-handoff
+  cancel-in-progress: false
+jobs:
+  release-native-runner:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Cancel only the identified foreground City Sample copy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          repo='znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+          run_id=43007298819
+          path=$(gh api "repos/$repo/actions/runs/$run_id" --jq '.path')
+          if [ "$path" != '.github/workflows/citysample-copy-cloud-20261111.yml' ]; then
+            echo 'Unexpected workflow; refusing to cancel'; exit 1
+          fi
+          status=$(gh api "repos/$repo/actions/runs/$run_id" --jq '.status')
+          if [ "$status" != completed ]; then gh run cancel "$run_id" -R "$repo"; fi
+          for attempt in $(seq 1 24); do
+            status=$(gh api "repos/$repo/actions/runs/$run_id" --jq '.status')
+            if [ "$status" = completed ]; then exit 0; fi
+            sleep 5
+          done
+          echo 'Foreground copy has not stopped yet'; exit 1
+  background-transfer:
+    needs: release-native-runner
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    steps:
+      - name: Start one on-demand user task for the same resumable cloud copy
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $outputRoot='C:\ANOMALIA-Validation\CloudTransfers\CitySample_20261111'
+          $taskName='ANOMALIAZ_CitySample_CloudCopy_20261111'
+          $description='ANOMALIAZ CitySample copy to Drive folder 1dTKVmD1glLXWql4qt0i9Qe0BllCuQqfZ; no source deletion'
+          $scriptPath=Join-Path $outputRoot 'copy-source-to-cloud.ps1'
+          $old=Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+          if($old -and $old.Description -ne $description){throw 'A different task uses this name; refusing overwrite'}
+          if($old -and $old.State -eq 'Running'){throw 'Transfer task already running; no duplicate'}
+          $oldCopies=@(Get-CimInstance Win32_Process -Filter "Name='robocopy.exe'" | Where-Object {$_.CommandLine -like '*ANOMALIAZ_CITYSAMPLE_SOURCE_20261111*'})
+          if($oldCopies.Count){throw 'Previous copy process still exists; no simultaneous transfer'}
+          if(!(Test-Path -LiteralPath $outputRoot)){New-Item -ItemType Directory -Path $outputRoot|Out-Null}
+          $scriptBody=@'
+          $transferOutput='C:\ANOMALIA-Validation\CloudTransfers\CitySample_20261111'
+          $ErrorActionPreference='Stop'
+          Start-Transcript -LiteralPath (Join-Path $transferOutput 'transfer-transcript.log') -Append -Force|Out-Null
+          @{state='STARTING_TRANSFER';utc=[DateTime]::UtcNow.ToString('o');sourceDeleted=$false}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $transferOutput 'live-status.json') -Encoding UTF8
+          $source='D:\ANOMALIA\FabImports\CitySample'
+          $dest='H:\Mon Drive\ANOMALIAZ_CITYSAMPLE_SOURCE_20261111'
+          $reportPath=Join-Path $transferOutput 'CITY_SAMPLE_CLOUD_COPY_20261111.json'
+          $log=Join-Path $transferOutput 'CITY_SAMPLE_CLOUD_COPY_20261111.log'
+          $report=[ordered]@{state='PREFLIGHT';source=$source;destination=$dest;cloudFolderId='1dTKVmD1glLXWql4qt0i9Qe0BllCuQqfZ';sourceDeleted=$false;mapsModified=$false;cloudServerUploadVerified=$false}
+          try {
+            if(!(Test-Path -LiteralPath (Join-Path $source 'CitySample.uproject'))){throw 'Original standalone City Sample project not found'}
+            $volume=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='H:'"
+            if(!$volume -or !$volume.VolumeName.StartsWith('znation.cmd@gmail.com')){throw 'H is not the confirmed connected Google Drive account'}
+            # This folder was created through the authenticated Drive connector.
+            # Wait for that same folder; never create a duplicate in a guessed path.
+            $deadline=[DateTime]::UtcNow.AddMinutes(3)
+            while(!(Test-Path -LiteralPath $dest) -and [DateTime]::UtcNow -lt $deadline){Start-Sleep -Seconds 5}
+            if(!(Test-Path -LiteralPath $dest)){throw 'Cloud-created destination has not appeared on this Google Drive mount'}
+            $files=@(Get-ChildItem -LiteralPath $source -File -Recurse -Force -ErrorAction Stop)
+            $total=[int64]0;$largest=[int64]0
+            foreach($f in $files){$total+=[int64]$f.Length;if($f.Length -gt $largest){$largest=[int64]$f.Length}}
+            if($files.Count -lt 120000 -or $total -lt 60GB -or $total -gt 80GB){throw 'Original source count or size changed unexpectedly'}
+            $freeC=([IO.DriveInfo]::new('C')).AvailableFreeSpace
+            function Publish-TransferStatus([string]$phase,[uint64]$ioBytes){
+            $status=[ordered]@{state=$phase;ioBytes=$ioBytes;utc=[DateTime]::UtcNow.ToString('o');cFreeBytes=([IO.DriveInfo]::new('C')).AvailableFreeSpace;sourceDeleted=$false}
+            $status|ConvertTo-Json -Depth 3|Set-Content -LiteralPath (Join-Path $transferOutput 'live-status.json') -Encoding UTF8
+          }
+          Publish-TransferStatus 'CHECKING_SOURCE_AND_CACHE_HEADROOM' 0
+          function Wait-CopyHeadroom([int64]$requiredBytes){
+              $waitLimit=[DateTime]::UtcNow.AddMinutes(45)
+              while(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt $requiredBytes){
+                if(!(Get-Process GoogleDriveFS -ErrorAction SilentlyContinue)){throw 'Google Drive desktop is not running'}
+                Publish-TransferStatus 'WAITING_FOR_GOOGLE_DRIVE_UPLOAD_CACHE' 0
+              Write-Host ('CITY_SAMPLE_WAITING_FOR_CLOUD_UPLOAD_CACHE_FREE_GIB='+[math]::Round(([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB,3))
+                if([DateTime]::UtcNow -gt $waitLimit){throw 'Cache headroom did not recover in 45 minutes; originals and resumable destination retained'}
+                Start-Sleep -Seconds 30
+              }
+            }
+            Wait-CopyHeadroom (12GB+$largest+256MB)
+            $report.sourceFiles=$files.Count;$report.sourceBytes=$total
+            $report.largestFileBytes=$largest
+            $report.state='COPYING_TO_GOOGLE_DRIVE_DESKTOP_SERVER_SYNC_PENDING'
+            $report|ConvertTo-Json -Depth 5|Set-Content -LiteralPath $reportPath -Encoding UTF8
+            Write-Host ('CITY_SAMPLE_CLOUD_COPY_STARTED=true')
+            Write-Host ('CITY_SAMPLE_CLOUD_SOURCE_FILES='+$files.Count)
+            Write-Host ('CITY_SAMPLE_CLOUD_SOURCE_BYTES='+$total)
+            Write-Host ('CITY_SAMPLE_CLOUD_SOURCE_GIB='+[math]::Round($total/1GB,3))
+            Write-Host ('CITY_SAMPLE_CLOUD_TARGET='+$dest)
+            Write-Host 'CITY_SAMPLE_CLOUD_COPY_NO_SOURCE_DELETION=true'
+            # Whole directory, resumable; no MOVE, MIR or PURGE. Single-threaded
+            # Google Drive cannot answer LFSM volume queries. Independently monitor
+            # physical C: cache space every second and retain an 3 GiB reserve.
+            $copyFinished=$false
+            $copyPass=0
+            while(!$copyFinished){
+              Wait-CopyHeadroom (12GB+$largest+256MB)
+              $copyPass++
+              Write-Host ('CITY_SAMPLE_COPY_PASS='+$copyPass)
+              $copyArgs=@(('"'+$source+'"'),('"'+$dest+'"'),'/E','/COPY:DAT','/DCOPY:DAT','/Z','/XJ','/R:2','/W:5','/NFL','/NDL','/NP',('/LOG+:"'+$log+'"'))
+              $process=Start-Process -FilePath robocopy.exe -ArgumentList $copyArgs -PassThru -NoNewWindow
+              $null=$process.Handle
+              $lastWrite=[uint64]0;$lastChange=[DateTime]::UtcNow
+              $copyTick=0;$pausedForCache=$false
+              while(!$process.HasExited){
+                Start-Sleep -Seconds 1
+                $copyTick++
+                $process.Refresh()
+                $io=Get-CimInstance Win32_Process -Filter ("ProcessId="+$process.Id) -ErrorAction SilentlyContinue
+                if($io){
+                  $written=[uint64]$io.WriteTransferCount
+                  if($written -ne $lastWrite){$lastChange=[DateTime]::UtcNow;$lastWrite=$written}
+                  if($copyTick % 30 -eq 0){Publish-TransferStatus 'COPYING_TO_GOOGLE_DRIVE' $written;Write-Host ('CITY_SAMPLE_COPY_IO_BYTES='+$written+';CACHE_FREE_GIB='+[math]::Round(([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB,3))}
+                }
+                if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 12GB){
+                  Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+                  $pausedForCache=$true
+                  Write-Host 'CITY_SAMPLE_COPY_PAUSED_FOR_CLOUD_CACHE_WILL_RESUME=true'
+                  break
+                }
+                if(([DateTime]::UtcNow-$lastChange).TotalMinutes -gt 20){
+                  Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+                  throw 'Copy made no I/O progress for 20 minutes; destination may be full or awaiting cloud upload'
+                }
+              }
+              $process.WaitForExit()
+              if($pausedForCache){continue}
+              Write-Host ('CITY_SAMPLE_ROBOCOPY_EXIT_CODE='+$process.ExitCode)
+              if($null -eq $process.ExitCode){throw 'Robocopy exit status unavailable; inspect transfer log'}
+              $report.robocopyExitCode=$process.ExitCode
+              if($process.ExitCode -ge 8){throw ('Robocopy copy failure '+$process.ExitCode)}
+              $copyFinished=$true
+            }
+            $destFiles=@(Get-ChildItem -LiteralPath $dest -File -Recurse -Force -ErrorAction Stop)
+            $lookup=@{}
+            foreach($f in $destFiles){$lookup[$f.FullName.Substring($dest.Length).TrimStart('\')]=[int64]$f.Length}
+            foreach($f in $files){
+              $rel=$f.FullName.Substring($source.Length).TrimStart('\')
+              if(!$lookup.ContainsKey($rel) -or $lookup[$rel] -ne $f.Length){throw ('Incomplete desktop copy: '+$rel)}
+            }
+            $report.state='ALL_SOURCE_FILES_COPIED_TO_DRIVE_DESKTOP_SERVER_UPLOAD_NOT_YET_VERIFIED'
+            Publish-TransferStatus $report.state $total
+            $report.desktopCopiedFiles=$files.Count
+            $report.desktopCopiedBytes=$total
+            Write-Host ('CITY_SAMPLE_CLOUD_DESKTOP_COPY_COMPLETE_FILES='+$files.Count)
+            Write-Host 'CITY_SAMPLE_SERVER_UPLOAD_VERIFIED=false'
+            Write-Host 'CITY_SAMPLE_ORIGINAL_SOURCE_RETAINED=true'
+          } catch {
+            if(Test-Path -LiteralPath $log){Get-Content -LiteralPath $log -Tail 45 | Write-Host}
+            $report.state='STOPPED_NO_SOURCE_DELETION'
+            Publish-TransferStatus $report.state 0
+            $report.error=$_.Exception.Message
+            Write-Host ('CITY_SAMPLE_CLOUD_COPY_BLOCKED='+$report.error)
+            throw
+          } finally {
+            $report|ConvertTo-Json -Depth 5|Set-Content -LiteralPath $reportPath -Encoding UTF8
+          }
+          
+          '@
+          [IO.File]::WriteAllText($scriptPath,$scriptBody,[Text.UTF8Encoding]::new($true))
+          $user=[Security.Principal.WindowsIdentity]::GetCurrent().Name
+          $principal=New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Limited
+          $settings=New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Hours 12) -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+          $powershell=Join-Path $env:windir 'System32\WindowsPowerShell\v1.0\powershell.exe'
+          $taskArgs='-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "'+$scriptPath+'"'
+          $action=New-ScheduledTaskAction -Execute $powershell -Argument $taskArgs -WorkingDirectory $outputRoot
+          Register-ScheduledTask -TaskName $taskName -Action $action -Principal $principal -Settings $settings -Description $description -Force|Out-Null
+          Start-ScheduledTask -TaskName $taskName
+          Start-Sleep -Seconds 15
+          $task=Get-ScheduledTask -TaskName $taskName
+          $info=Get-ScheduledTaskInfo -TaskName $taskName
+          $statusPath=Join-Path $outputRoot 'live-status.json'
+          if($task.State -ne 'Running' -and $info.LastTaskResult -ne 0){throw ('Background transfer did not start: '+$info.LastTaskResult)}
+          if(!(Test-Path -LiteralPath $statusPath)){throw 'Background task has not emitted a real startup status'}
+          $status=Get-Content -LiteralPath $statusPath -Raw|ConvertFrom-Json
+          if($status.state -eq 'STOPPED_NO_SOURCE_DELETION'){throw 'Transfer task stopped in preflight'}
+          Write-Host ('CITY_SAMPLE_INDEPENDENT_TRANSFER_TASK='+$task.State)
+          Write-Host ('CITY_SAMPLE_INDEPENDENT_TRANSFER_STATUS='+$status.state)
+          Write-Host 'UE5_RUNNER_RELEASED_WHILE_CLOUD_COPY_CONTINUES=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: CITY-SAMPLE-INDEPENDENT-TRANSFER-STATUS
+          path: C:\ANOMALIA-Validation\CloudTransfers\CitySample_20261111\live-status.json
+          if-no-files-found: warn

@@ -44,6 +44,9 @@ function createGameWindow(){
 let multiplayerServer=null;const clientSockets=new Map();
 const validSender=event=>{const url=new URL(event.senderFrame.url);if(url.protocol!=='anomalia:'||url.host!=='game')throw Error('Forbidden');};
 app.whenReady().then(()=>{
+ const unrealProject=require('./unreal-project.cjs');
+ ipcMain.handle('anomalia:unreal-maps',event=>{validSender(event);return unrealProject.listMaps();});
+ ipcMain.handle('anomalia:unreal-open-map',(event,packageName)=>{validSender(event);return unrealProject.openInUnreal(packageName);});
  ipcMain.handle('anomalia:connect',async(event,token,address)=>{
   validSender(event);if(typeof token!=='string'||token.length>64)throw Error('Invalid socket token');const url=new URL(address);if(!['ws:','wss:'].includes(url.protocol)||url.username||url.password)throw Error('Invalid server address');
   const owner=event.sender.id,previous=clientSockets.get(owner);previous?.socket.close();

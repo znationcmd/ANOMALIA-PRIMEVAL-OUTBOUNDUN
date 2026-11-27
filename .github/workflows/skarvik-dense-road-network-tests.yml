@@ -1,0 +1,18 @@
+name: SKARVIK - validate expanded 382 roads and 302 paths
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-dense-road-network-tests.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check-road-network:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check 48km 125 sites 382 connected roads 992 local street segments and 302 trails
+        run: python -m unittest discover -s tests -p test_skarvik_denser_roads_and_paths.py -v
+      - name: Check original SKARVIK layout regression
+        run: python -m unittest discover -s tests -p test_skarvik_world_layout_48km.py -v

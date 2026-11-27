@@ -1,0 +1,43 @@
+name: ANOMALIA Editor - Windows real project verification
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths:
+      - 'desktop/unreal-project.cjs'
+      - '.github/workflows/anomalia-editor-windows-verify.yml'
+jobs:
+  verify:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+      - name: Verify local Unreal project and installed map inventory without changing project
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          node --check desktop/unreal-project.cjs
+          node --check desktop/main.cjs
+          node --check desktop/preload.cjs
+          node --check src/map-editor.js
+          @'
+          const bridge=require('./desktop/unreal-project.cjs');
+          const result=bridge.listMaps();
+          console.log('PROJECT_CONNECTED='+result.connected);
+          console.log('PROJECT_PATH='+result.project);
+          console.log('UMAP_COUNT='+(result.count||0));
+          console.log('MAP_PACKAGES='+JSON.stringify((result.maps||[]).filter(m=>/skarvik|archipelago|big.city/i.test(m.package)).map(m=>m.package)));
+          if(!result.connected||!result.count)process.exitCode=1;
+          '@ | node -
+          $locations=@(
+            $env:ANOMALIA_UNREAL_EDITOR_EXE,
+            'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe',
+            'D:\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe',
+            'D:\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe'
+          )
+          $found=$locations | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Leaf) } | Select-Object -First 1
+          Write-Host ('UNREAL_EDITOR_FOUND='+[bool]$found)
+          if($found){Write-Host ('UNREAL_EDITOR_PATH='+$found)}
+          Write-Host 'READ_ONLY_VALIDATION=true'

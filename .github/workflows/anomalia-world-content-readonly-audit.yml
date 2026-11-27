@@ -1,0 +1,89 @@
+name: ANOMALIA - read-only world, loot, character and dog readiness audit
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/anomalia-world-content-readonly-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-existing-content:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Inspect existing map proofs, loot catalog, character and dog assets without modifying the project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path $marker) -or (Get-Content $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted project stage'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal is active; read-only audit will not inspect files while editor is writing'}
+          $out=Join-Path $env:GITHUB_WORKSPACE 'anomalia-world-content-readiness-audit.json'
+          $saved=Join-Path $root 'Saved\SkarvikCity'
+          $log=Join-Path $root 'Saved\Logs\AnomaliaZPrigimalia.log'
+          $contentRoot=Join-Path $root 'Content'
+          $reports=@()
+          $reportPath=Join-Path $saved 'FinalRegionalExactDuplicateNonDestructiveSuppression20261101\exact-original-B-road-flags-for-restoration.json'
+          if(Test-Path $reportPath){
+            try {
+              $j=Get-Content $reportPath -Raw | ConvertFrom-Json
+              $reports+= [pscustomobject]@{path=$reportPath;topLevelKeys=@($j.PSObject.Properties.Name);summary=($j | ConvertTo-Json -Depth 5 -Compress).Substring(0,[Math]::Min(7000,($j | ConvertTo-Json -Depth 5 -Compress).Length))}
+            } catch {$reports+= [pscustomobject]@{path=$reportPath;parseError=$_.Exception.Message}}
+          }
+          $logMatches=@()
+          if(Test-Path $log){
+            $patterns='Regional|SKARVIK|Road|Route|CitySample|Loot|Character|Dog|Shepherd|Pawn|Anim|Error:|Warning:'
+            $logMatches=@(Select-String -LiteralPath $log -Pattern $patterns -SimpleMatch:$false |
+              Select-Object -Last 250 | ForEach-Object {$_.Line})
+          }
+          $patterns='*dog*','*shepherd*','*wolf*','*character*','*survivor*','*mannequin*','*loot*','*item*','*weapon*','*clothing*','*gear*'
+          $assets=@()
+          foreach($pattern in $patterns){
+            $assets+=Get-ChildItem -LiteralPath $contentRoot -Recurse -File -Filter $pattern -ErrorAction SilentlyContinue |
+              Select-Object -First 80 | ForEach-Object {[pscustomobject]@{path=$_.FullName.Substring($root.Length+1);bytes=$_.Length;extension=$_.Extension}}
+          }
+          $catalogs=@(Get-ChildItem -LiteralPath $contentRoot -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object {$_.Name -match 'loot|item.*catalog|catalog.*item|character|dog|animal|inventory'} |
+            Select-Object -First 150 | ForEach-Object {[pscustomobject]@{path=$_.FullName.Substring($root.Length+1);bytes=$_.Length;extension=$_.Extension}})
+          $maps=@()
+          foreach($p in @(
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'))){
+            $f=Get-Item $p
+            $maps+= [pscustomobject]@{path=$p;bytes=$f.Length;lastWriteUtc=$f.LastWriteTimeUtc.ToString('o');sha256=(Get-FileHash $p -Algorithm SHA256).Hash}
+          }
+          $drives=@(Get-PSDrive -PSProvider FileSystem | ForEach-Object {[pscustomobject]@{name=$_.Name;freeBytes=$_.Free;usedBytes=$_.Used}})
+          $result=[pscustomobject]@{
+            state='ANOMALIA_EXISTING_CONTENT_READ_ONLY_AUDIT'
+            readOnly=$true
+            stage='41188816555'
+            maps=$maps
+            previousRoadSuppressionReport=$reports
+            recentRelevantUnrealLogLines=$logMatches
+            candidateCharacterDogLootAssets=@($assets | Sort-Object path -Unique)
+            candidateCatalogFiles=$catalogs
+            driveSpace=$drives
+            note='File-name and log inspection only. No assets imported, maps edited, project files deleted or overwritten.'
+          }
+          $result | ConvertTo-Json -Depth 9 | Set-Content -LiteralPath $out -Encoding UTF8
+          Write-Host ('MAP_FILES_CHECKED='+$maps.Count)
+          Write-Host ('CANDIDATE_ASSETS='+$assets.Count)
+          Write-Host ('CATALOG_FILES='+$catalogs.Count)
+          Write-Host ('RELEVANT_LOG_LINES='+$logMatches.Count)
+          Write-Host 'READ_ONLY_CONTENT_AUDIT_COMPLETE=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomalia-world-content-readiness-audit
+          path: anomalia-world-content-readiness-audit.json
+          if-no-files-found: warn

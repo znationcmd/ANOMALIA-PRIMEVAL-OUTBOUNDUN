@@ -1,0 +1,65 @@
+name: SKARVIK City Sample - native READ ONLY import inventory
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-citysample-import-inventory.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  audit-city:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Count files, dependencies and available storage (no modifications)
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $src='D:\ANOMALIA\FabImports\CitySample'
+          $dst='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $dOriginal='D:\ANOMALIA\unreal'
+          foreach($name in @('C','D')){
+            $drive=[System.IO.DriveInfo]::new($name)
+            Write-Host ("SKARVIK_DISK_VOLUME={0} FREE_GIB={1:N2} TOTAL_GIB={2:N2}" -f $name,($drive.AvailableFreeSpace/1GB),($drive.TotalSize/1GB))
+          }
+          foreach($p in @($src,$dst,$dOriginal)){
+            if(!(Test-Path -LiteralPath $p -PathType Container)){Write-Host "SKARVIK_SOURCE_MISSING=$p";continue}
+            $bytes=[long]0;$files=0;$umaps=0;$uassets=0
+            foreach($f in (Get-ChildItem -LiteralPath $p -Recurse -File -ErrorAction Stop)){
+              $bytes+=$f.Length;$files++
+              if($f.Extension -eq '.umap'){$umaps++}
+              if($f.Extension -eq '.uasset'){$uassets++}
+            }
+            Write-Host ("SKARVIK_INVENTORY path={0} FILES={1} SIZE_GIB={2:N2} MAPS={3} UASSETS={4}" -f $p,$files,($bytes/1GB),$umaps,$uassets)
+          }
+          foreach($sub in @('Content','Plugins','Config','Source')){
+            $path=Join-Path $src $sub
+            if(Test-Path -LiteralPath $path -PathType Container){
+              $bytes=[long]0;$files=0
+              foreach($f in (Get-ChildItem -LiteralPath $path -Recurse -File -ErrorAction Stop)){$bytes+=$f.Length;$files++}
+              Write-Host ("SKARVIK_CITY_FOLDER={0} COUNT={1} SIZE_GIB={2:N2}" -f $sub,$files,($bytes/1GB))
+            }
+          }
+          $srcContent=Join-Path $src 'Content'
+          if(Test-Path -LiteralPath $srcContent){
+            foreach($dir in (Get-ChildItem -LiteralPath $srcContent -Directory | Select-Object -First 35)){
+              $bytes=[long]0;$files=0
+              foreach($f in (Get-ChildItem -LiteralPath $dir.FullName -Recurse -File -ErrorAction Stop)){$bytes+=$f.Length;$files++}
+              Write-Host ("SKARVIK_CONTENT_ROOT name={0} files={1} GiB={2:N2}" -f $dir.Name,$files,($bytes/1GB))
+            }
+          }
+          $proj=Join-Path $src 'CitySample.uproject'
+          if(Test-Path -LiteralPath $proj){
+            $p=Get-Content -LiteralPath $proj -Raw|ConvertFrom-Json
+            Write-Host ("SKARVIK_CITY_SAMPLE_PLUGINS="+(($p.Plugins|Where-Object{$_.Enabled}|ForEach-Object{$_.Name}) -join ','))
+          }
+          $maps=Join-Path $src 'Content\Map'
+          if(Test-Path -LiteralPath $maps){
+            foreach($f in (Get-ChildItem -LiteralPath $maps -Filter '*.umap' -Recurse -File | Select-Object -First 50)){
+              Write-Host ("SKARVIK_SOURCE_MAP={0} SIZE_BYTES={1}" -f $f.FullName,$f.Length)
+            }
+          }
+          Write-Host 'SKARVIK_READ_ONLY_INVENTORY_FINISHED=true'

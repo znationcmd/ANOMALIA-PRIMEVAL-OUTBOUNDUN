@@ -1,0 +1,27 @@
+name: SKARVIK - C++ verify seven true original offshore island coastlines
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-verify-seven-island-source-coast.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  independent-native-coastline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and test ORIGINAL native 48km archipelago source coastline and 15 dry towns
+        run: |
+          set -euo pipefail
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -I unreal/Source/AnomaliaZPrigimalia tests/native/skarvik_seven_offshore_source_islands.cpp -o /tmp/skarvik-seven-islands-source-test
+          /tmp/skarvik-seven-islands-source-test | tee skarvik-seven-native-coastline-verified.txt
+          grep -q '^SKARVIK_NATIVE_SOURCE_SEVEN_DETACHED_ISLANDS_CONFIRMED=true$' skarvik-seven-native-coastline-verified.txt
+          grep -q '^SKARVIK_NATIVE_SOURCE_DRY_ISLAND_LOCALITY_CENTERS=15$' skarvik-seven-native-coastline-verified.txt
+          echo 'SKARVIK_TERRAIN_TOPOLOGY_TESTED_BUT_NOT_YET_NATIVE_GAMEPLAY_VALIDATED=true'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: skarvik-seven-native-island-coastline-cpp-source-proof
+          path: skarvik-seven-native-coastline-verified.txt
+          if-no-files-found: error

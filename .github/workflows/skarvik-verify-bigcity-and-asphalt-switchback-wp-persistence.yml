@@ -1,0 +1,63 @@
+name: SKARVIK - independently reopen 180 genuine City Sample meshes and repaired roads
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-verify-bigcity-and-asphalt-switchback-wp-persistence.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Protect original and City Sample mesh core backup
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong stage'}
+          foreach($file in @(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\VisibleBigCitySampleCoreV1\graded-before-visible-city.umap'))){
+            if(!(Test-Path -LiteralPath $file)){throw "Protected world or city backup missing: $file"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Concurrent native Unreal Editor active'}
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_citysample_and_all_switchback_meshes.py')
+          if($LASTEXITCODE -ne 0){throw 'City World Partition reopen test Python invalid'}
+      - name: Verify actual 180 City Sample mesh references after 48km graded WP reload
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_CITYCORE_REOPEN_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-citysample-and-switchback-meshes-persistence.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_citysample_and_all_switchback_meshes.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path $env:SKARVIK_CITYCORE_REOPEN_REPORT)){throw 'CitySample source mesh evidence not found'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_CITYCORE_REOPEN_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_REAL_CITYSAMPLE_REOPEN_STATE='+$r.state)
+          Write-Host ('SKARVIK_REAL_CITYSAMPLE_REOPEN_MESHES='+$r.savedWorldCounts.citySourceMeshActors)
+          Write-Host ('SKARVIK_REAL_CITYSAMPLE_REOPEN_ROAD_GAP_PATCHES='+$r.savedWorldCounts.gapRepairRealAsphaltActors)
+          Write-Host ('SKARVIK_NATIVE_SWITCHBACK_REOPEN_ACTORS='+$r.savedWorldCounts.switchbackRealAsphaltActors)
+          if($code -ne 0 -or $r.state -ne 'BIG_CITY_REAL_CITYSAMPLE_180_MESHES_AND_13556_ASPHALT_ACTORS_PERSIST_AFTER_REOPEN'){
+            throw ('Real CitySample actor mesh ref reopen failed: '+$r.error)
+          }
+          Write-Host 'SKARVIK_REAL_CITYSAMPLE_NATIVE_GEOMETRY_AND_REPAIRED_ROADS_PERSIST=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-citysource-180-meshes-and-13556-asphalt-actors-reopen-proof
+          path: skarvik-citysample-and-switchback-meshes-persistence.json
+          if-no-files-found: warn

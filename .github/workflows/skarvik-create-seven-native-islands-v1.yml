@@ -1,0 +1,122 @@
+name: SKARVIK - create seven actual separated native islands with first 15 village cores
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-create-seven-native-islands-v1.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-island-world:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Check isolated Windows stage and protected existing native worlds
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $mark=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $mark) -or (Get-Content -LiteralPath $mark -Raw).Trim() -ne '41188816555'){throw 'Untrusted C stage marker'}
+          foreach($p in @(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'))){
+            if(!(Test-Path -LiteralPath $p)){throw "Missing existing protected map: $p"}
+          }
+          if(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap')){
+            throw 'Native islands v1 already exists; never recreate'
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Concurrent UE editor process'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ('SKARVIK_SEVEN_ISLANDS_FREE_C_GIB='+[math]::Round($free,2))
+          if($free -lt 19){throw 'C stage disk below 19 GiB reserve for new native 48km world'}
+          $p=Get-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-island-migration-v1.json') -Raw|ConvertFrom-Json
+          if(@($p.islands).Count -ne 7 -or $p.targetTotalLocalities -ne 15){throw 'Seven-island migration plan changed'}
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\create_skarvik_native_seven_islands_v1.py')
+          if($LASTEXITCODE -ne 0){throw 'Native island author source Python syntax invalid'}
+          Write-Host 'SKARVIK_ISLANDS_NATIVE_48KM_SAFE_PREFLIGHT_OK=true'
+      - name: Back up and update only isolated C stage C++ archipelago importer sources
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $sub='Source\AnomaliaZPrigimalia\World'
+          $backup=Join-Path $root 'Saved\SkarvikCity\SevenIslandsV1NativeSourceBackup_20261101'
+          if(Test-Path -LiteralPath $backup){throw 'Native source change already attempted; do not overwrite backup'}
+          New-Item -Path $backup -ItemType Directory|Out-Null
+          foreach($name in @('AnomaliaZPrigimaliaWorldImportLibrary.cpp','AnomaliaZPrigimaliaWorldImportLibrary.h')){
+            $destination=Join-Path (Join-Path $root $sub) $name
+            $source=Join-Path (Join-Path $env:GITHUB_WORKSPACE ('unreal\'+$sub)) $name
+            if(!(Test-Path -LiteralPath $destination) -or !(Test-Path -LiteralPath $source)){throw "Missing native C++ source: $name"}
+            Copy-Item -LiteralPath $destination -Destination (Join-Path $backup $name) -ErrorAction Stop
+            Copy-Item -LiteralPath $source -Destination $destination -Force -ErrorAction Stop
+          }
+          Write-Host 'SKARVIK_ISLANDS_CPP_UPDATED_IN_ISOLATED_C_STAGE_ONLY=true'
+      - name: Compile native seven-island importer for UE5.8 editor, never build from D
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\AnomaliaZPrigimalia.uproject'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          & $build AnomaliaZPrigimaliaEditor Win64 Development $project -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
+          if($LASTEXITCODE -ne 0){throw ('Native seven island C++ compilation failed code='+$LASTEXITCODE)}
+          Write-Host 'SKARVIK_ISLANDS_V1_NATIVE_CPP_COMPILED=true'
+      - name: Create independent 48km original-coast World Partition and real dry island houses
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $env:SKARVIK_ISLANDS_NATIVE_PLAN=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-island-migration-v1.json'
+          $env:SKARVIK_ISLANDS_NATIVE_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-native-seven-islands-v1-result.json'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\create_skarvik_native_seven_islands_v1.py'
+          & $editor $project "-ExecutePythonScript=$script" -d3d11 -unattended -nopause -nosound
+          $rc=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_ISLANDS_NATIVE_REPORT)){throw 'Native island world report missing'}
+          $result=Get-Content -LiteralPath $env:SKARVIK_ISLANDS_NATIVE_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_NATIVE_SEVEN_ISLANDS_STATE='+$result.state)
+          Write-Host ('SKARVIK_NATIVE_ISLAND_LANDSCAPE_COMPONENTS='+$result.landscapeComponentCount)
+          Write-Host ('SKARVIK_NATIVE_ISLAND_COLLISION_COMPONENTS='+$result.collisionComponentCount)
+          Write-Host ('SKARVIK_NATIVE_ISLAND_SETTLEMENT_CORES='+$result.settlementsWithReal3DBuildingCores)
+          Write-Host ('SKARVIK_NATIVE_ISLAND_3D_BUILDINGS='+$result.realNativeBuildingActorsSaved)
+          if($rc -ne 0 -or $result.state -ne 'NEW_NATIVE_48KM_SEVEN_ISLAND_WORLD_WITH_FIFTEEN_DRY_REAL_BUILDING_CORES_SAVED_NOT_PLAYTESTED'){
+            throw ('Isolated archipelago version still unverified: '+$result.error)
+          }
+          if($result.settlementsWithReal3DBuildingCores -ne 15 -or $result.realNativeBuildingActorsSaved -lt 95 -or
+             $result.landscapeComponentCount -ne 576 -or $result.collisionComponentCount -ne 576){
+             throw 'Required real 15 island locality cores or terrain/collision proof missing'
+          }
+          Write-Host 'SKARVIK_SEVEN_NATIVE_DETACHED_ISLANDS_FIRST_LOCALITY_CORES_SAVED=true'
+          Write-Host 'SKARVIK_GRADED_MAIN_WORLD_LEFT_UNMODIFIED_NO_PREMATURE_TERRAIN_MERGE=true'
+      - name: Restore isolated C stage C++ sources if build or native map import fails
+        if: failure()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $sub='Source\AnomaliaZPrigimalia\World'
+          $backup=Join-Path $root 'Saved\SkarvikCity\SevenIslandsV1NativeSourceBackup_20261101'
+          foreach($name in @('AnomaliaZPrigimaliaWorldImportLibrary.cpp','AnomaliaZPrigimaliaWorldImportLibrary.h')){
+            $source=Join-Path $backup $name
+            if(Test-Path -LiteralPath $source){
+              Copy-Item -LiteralPath $source -Destination (Join-Path (Join-Path $root $sub) $name) -Force
+              Write-Host ('SKARVIK_ISLANDS_NATIVE_CPP_SOURCE_RESTORED='+$name)
+            }
+          }
+          Write-Host 'SKARVIK_ORIGINALS_UNMODIFIED_FAILURE_ROLLBACK_COMPLETED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-true-seven-offshore-islands-native-48km-first-towns
+          path: skarvik-native-seven-islands-v1-result.json
+          if-no-files-found: warn

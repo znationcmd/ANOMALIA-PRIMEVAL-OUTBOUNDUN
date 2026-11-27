@@ -1,0 +1,62 @@
+name: SKARVIK - diagnose actual Big City LevelInstance runtime partition mode
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-bigcity-runtime-partition-mode-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  check-city-runtime:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Validate protected City Sample and no concurrent Unreal task
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong native stage'}
+          foreach($file in @('D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+           (Join-Path $root 'Content\Map\Big_City_LVL.umap'),
+           (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'))){
+            if(!(Test-Path -LiteralPath $file)){throw "Protected World Partition file missing: $file"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Concurrent UE process'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_bigcity_runtime_partition_behavior.py')
+          if($LASTEXITCODE -ne 0){throw 'UE runtime behavior survey Python syntax invalid'}
+      - name: Inspect native City Sample Level Instance partitioned mode and source World reference
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_BIGCITY_RUNTIME_AUDIT_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-bigcity-runtime-level-instance-options.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_bigcity_runtime_partition_behavior.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $rc=$LASTEXITCODE
+          if(!(Test-Path $env:SKARVIK_BIGCITY_RUNTIME_AUDIT_REPORT)){throw 'Native city runtime behavior audit missing'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_BIGCITY_RUNTIME_AUDIT_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_BIGCITY_RUNTIME_MODE_STATE='+$r.state)
+          Write-Host ('SKARVIK_BIGCITY_NATIVE_SOURCE='+$r.runtimeWorldSourcePath)
+          Write-Host ('SKARVIK_BIGCITY_RUNTIME_BEHAVIOR='+$r.editorProperty_desired_runtime_behavior)
+          Write-Host ('SKARVIK_BIGCITY_SPATIALLY_LOADED='+$r.editorProperty_is_spatially_loaded)
+          Write-Host ('SKARVIK_BIGCITY_EDITOR_ONLY='+$r.editorProperty_is_editor_only_actor)
+          if($rc -ne 0 -or $r.state -ne 'BIG_CITY_REAL_LEVELINSTANCE_RUNTIME_MODE_AND_STREAMING_GATES_AUDITED_READONLY'){
+            throw ('Native Big City runtime review incomplete: '+$r.error)
+          }
+          Write-Host 'SKARVIK_BIGCITY_RUNTIME_OPTIONS_DIAGNOSED_NO_FULL_CITY_STREAMING=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-bigcity-level-instance-runtime-behavior-audit
+          path: skarvik-bigcity-runtime-level-instance-options.json
+          if-no-files-found: warn
