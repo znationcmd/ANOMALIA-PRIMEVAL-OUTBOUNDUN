@@ -58,8 +58,8 @@ jobs:
           Write-Output ('ANOMALIA_STAGE_SIZE_GB='+[math]::Round($stageBytes/1GB,2))
           Write-Output ('ANOMALIA_STAGE_UCAS_GB='+[math]::Round($ucas.Length/1GB,2))
           if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue|Where-Object{-not $_.HasExited}).Count){throw 'Existing Unreal/game process appeared before launch; preserved'}
-          $log=Join-Path (Split-Path $exe) 'ANOMALIA_vehicle_launch.log';$err=Join-Path (Split-Path $exe) 'ANOMALIA_vehicle_launch.err'
-          $proc=Start-Process -FilePath $exe.FullName -ArgumentList @('-windowed','-ResX=1280','-ResY=720','-log','-stdout','-FullStdOutLogOutput') -WorkingDirectory (Split-Path $exe) -RedirectStandardOutput $log -RedirectStandardError $err -PassThru
+          $log=Join-Path (Split-Path $exe.FullName) 'ANOMALIA_vehicle_launch.log';$err=Join-Path (Split-Path $exe.FullName) 'ANOMALIA_vehicle_launch.err'
+          $proc=Start-Process -FilePath $exe.FullName -ArgumentList @('-windowed','-ResX=1280','-ResY=720','-log','-stdout','-FullStdOutLogOutput') -WorkingDirectory (Split-Path $exe.FullName) -RedirectStandardOutput $log -RedirectStandardError $err -PassThru
           Start-Sleep -Seconds 25;$proc.Refresh()
           if($proc.HasExited){Write-Output ('ANOMALIA_LAUNCH_EXIT_CODE='+$proc.ExitCode);if(Test-Path $log){Get-Content $log -Tail 100};if(Test-Path $err){Get-Content $err -Tail 60};throw 'Fresh corrected package exited during launch smoke test'}
           Write-Output ('ANOMALIA_GAME_RUNNING_PID='+$proc.Id)
