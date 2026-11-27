@@ -12,7 +12,8 @@ jobs:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 120
     steps:
-      - name: Incrementally cook required assets, stage on D, and launch smoke test
+      - uses: actions/checkout@v4
+      - name: Build and cook vehicles with Audio Modulation, stage on C, and launch smoke test
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
@@ -21,21 +22,34 @@ jobs:
           if($busy.Count){throw 'Existing Unreal/game session preserved'}
           $root='D:\ANOMALIA\unreal';$project=Join-Path $root 'AnomaliaPrimeval.uproject';$mapFile=Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap';$config=Join-Path $root 'Config\DefaultGame.ini'
           foreach($p in @($project,$mapFile,$config)){if(!(Test-Path -LiteralPath $p)){throw "Required project file missing: $p"}}
+          $projectJson=Get-Content -LiteralPath $project -Raw|ConvertFrom-Json
+          if(@($projectJson.Plugins|Where-Object{$_.Name -eq 'AudioModulation' -and $_.Enabled}).Count -eq 0){throw 'Audio Modulation is not enabled in the Windows game project'}
           $cfg=[IO.File]::ReadAllText($config);$paths=@('/Game/Anomalia/Vehicles','/Game/AnomaliaZPrigimalia/Vehicles','/Game/Audio/MetaSounds/Ambient')
           foreach($p in $paths){if($cfg -notmatch [regex]::Escape('+DirectoriesToAlwaysCook=(Path="'+$p+'")')){throw "DefaultGame cook inclusion missing: $p"}}
           $d=Get-PSDrive D;$c=Get-PSDrive C
           Write-Output ('PRECOOK_D_FREE_GB='+[math]::Round($d.Free/1GB,2))
           Write-Output ('PRECOOK_C_FREE_GB='+[math]::Round($c.Free/1GB,2))
-          if($d.Free -lt 12GB -or $c.Free -lt 4GB){throw 'Not enough safe space for incremental cook and stage'}
-          $stageRoot=Join-Path $root 'Saved\StagedBuilds';$stage=Join-Path $stageRoot ('CitySample-Vehicles-Included-'+$env:GITHUB_RUN_ID)
+          if($d.Free -lt 8GB -or $c.Free -lt 5GB){throw 'Not enough safe space for build and C-drive staging'}
+          $stageRoot='C:\ANOMALIA_VehicleRuntime';New-Item -ItemType Directory -Path $stageRoot -Force|Out-Null
+          $stage=Join-Path $stageRoot ('AudioModulation-Vehicles-'+$env:GITHUB_RUN_ID)
           $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat';if(!(Test-Path -LiteralPath $uat)){throw 'RunUAT.bat missing'}
-          & $uat BuildCookRun "-project=$project" -noP4 -platform=Win64 -clientconfig=Development -skipbuild -cook '-map=/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1' -iterativecooking -stage -pak -iostore "-stagingdirectory=$stage" -utf8output
+          & $uat BuildCookRun "-project=$project" -noP4 -platform=Win64 -clientconfig=Development -build -cook '-map=/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1' -iterativecooking -stage -pak -iostore "-stagingdirectory=$stage" -utf8output
           $uatExit=$LASTEXITCODE;Write-Output ('ANOMALIA_UAT_EXIT='+$uatExit)
           if($uatExit -ne 0){throw "Corrected incremental cook/package failed: $uatExit"}
-          $cooked=Join-Path $root 'Saved\Cooked';$assetNames=@('SM_dirt_bike.uasset','SM_motorcycle.uasset','SM_scooter.uasset','SM_quad.uasset','sfx_Amb_VEH_CityMotorcycle_meta.uasset')
-          $hits=@(Get-ChildItem -LiteralPath $cooked -Recurse -File -ErrorAction SilentlyContinue|Where-Object{$assetNames -contains $_.Name})
-          foreach($name in $assetNames){if($hits.Name -contains $name){Write-Output ('COOKED_VEHICLE_ASSET='+$name)}else{Write-Output ('COOKED_VEHICLE_ASSET_MISSING='+$name)}}
-          if(@($hits|Where-Object Name -in @('SM_dirt_bike.uasset','SM_motorcycle.uasset','SM_scooter.uasset','SM_quad.uasset')).Count -ne 4){throw 'The corrected cook still lacks one or more of the four mesh assets'}
+          $review=Join-Path $root ('Saved\VehicleReview\four-vehicles-packaged-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $review -Force|Out-Null
+          $env:ANOMALIA_VEHICLE_CHECK_OUT=$review
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $checker=Join-Path $env:GITHUB_WORKSPACE 'scripts\vehicle-assets\check_four_vehicles.py'
+          foreach($p in @($editor,$checker)){if(!(Test-Path -LiteralPath $p)){throw "Vehicle check input missing: $p"}}
+          & $editor $project '-run=pythonscript' "-script=$checker" -nullrhi -unattended -NoAssetRegistryCache -SkipAssetScan "-abslog=$review\vehicle-check.log"
+          if($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath (Join-Path $review 'vehicle-runtime-check.json'))){throw "Vehicle asset validation failed: $LASTEXITCODE"}
+          $result=Get-Content -LiteralPath (Join-Path $review 'vehicle-runtime-check.json') -Raw|ConvertFrom-Json
+          if(!$result.engine_sound.asset_loaded){throw 'Engine sound did not load in Unreal'}
+          $checkLog=Get-Content -LiteralPath (Join-Path $review 'vehicle-check.log') -Raw
+          if($checkLog -match "Failed to find script package for import object.*AudioModulation|class \\(SoundControlBus\\) does not exist|class \\(SoundModulationPatch\\) does not exist"){throw 'Audio Modulation classes are missing from the new build'}
+          Write-Output 'AUDIO_MODULATION_CLASS_WARNINGS=NONE'
+          Get-Content -LiteralPath (Join-Path $review 'vehicle-runtime-check.json')
           $exe=Get-ChildItem -LiteralPath $stage -Filter 'AnomaliaPrimeval.exe' -File -Recurse|Select-Object -First 1
           $ucas=Get-ChildItem -LiteralPath $stage -Filter '*.ucas' -File -Recurse|Where-Object Length -gt 1MB|Select-Object -First 1
           if(!$exe -or !$ucas){throw 'Fresh packaged executable or IoStore container missing'}
@@ -49,4 +63,12 @@ jobs:
           Start-Sleep -Seconds 25;$proc.Refresh()
           if($proc.HasExited){Write-Output ('ANOMALIA_LAUNCH_EXIT_CODE='+$proc.ExitCode);if(Test-Path $log){Get-Content $log -Tail 100};if(Test-Path $err){Get-Content $err -Tail 60};throw 'Fresh corrected package exited during launch smoke test'}
           Write-Output ('ANOMALIA_GAME_RUNNING_PID='+$proc.Id)
+          $launchText=Get-Content -LiteralPath $log -Raw
+          if($launchText -match "class \\(SoundControlBus\\) does not exist|class \\(SoundModulationPatch\\) does not exist"){throw 'Audio Modulation class warnings remain in the packaged game log'}
           Write-Output 'ANOMALIA_CORRECTED_PACKAGE_LAUNCH=alive_after_25_seconds'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomalia-audiomodulation-vehicle-build
+          path: D:\ANOMALIA\unreal\Saved\VehicleReview\four-vehicles-packaged-*\*
+          if-no-files-found: warn
