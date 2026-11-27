@@ -21,6 +21,8 @@ jobs:
         run: |
           $ErrorActionPreference='Stop'
           if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected Windows PC runner'}
+          $workspace=$env:GITHUB_WORKSPACE
+          foreach($id in @('46008823882','46009358417')){$old=Join-Path $workspace ('installed-final-map-smoke-'+$id);if(Test-Path $old){Remove-Item -LiteralPath $old -Recurse -Force}}
           $busy=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue)
           if($busy.Count){throw 'An Unreal or game session is already open; preserve it and do not launch a second copy'}
           $desktop=[Environment]::GetFolderPath('Desktop')
@@ -36,7 +38,7 @@ jobs:
           $containers=@()
           if(Test-Path $paks){$containers=@(Get-ChildItem -LiteralPath $paks -File -ErrorAction SilentlyContinue|Where-Object{$_.Extension -in '.pak','.utoc','.ucas'}|ForEach-Object{$_.Name.ToString()})}
           if($containers.Count -eq 0){throw 'No cooked PAK or IoStore containers found beside the installed game'}
-          $out=Join-Path $env:GITHUB_WORKSPACE ('installed-final-map-smoke-'+$env:GITHUB_RUN_ID)
+          $out=Join-Path $workspace ('installed-final-map-smoke-'+$env:GITHUB_RUN_ID)
           New-Item -ItemType Directory -Path $out -Force|Out-Null
           $stdout=Join-Path $out 'game-stdout.log';$stderr=Join-Path $out 'game-stderr.log'
           $launchArgs=@($shortcut.Arguments,'-windowed','-ResX=1280','-ResY=720','-log','-stdout','-FullStdOutLogOutput')
@@ -66,5 +68,5 @@ jobs:
         if: always()
         with:
           name: installed-skarvik-final-map-smoke
-          path: installed-final-map-smoke-*\result.json
+          path: installed-final-map-smoke-${{ github.run_id }}\result.json
           if-no-files-found: warn
