@@ -1,0 +1,42 @@
+name: ANOMALIA - remove only unsynced temporary OneDrive model copies
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-onedrive-models-unsynced-cleanup.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  cleanup-temp-copies:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Remove this run's unsynced duplicates only after source-hash check
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected PC runner'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal/game active'}
+          Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class WinAttr3 { [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] public static extern uint GetFileAttributes(string lpFileName); }'
+          $one=$env:OneDriveConsumer
+          $targetRoot=Join-Path $one 'ANOMALIAZ_PRIGIMALIA\Modeles_3D\Sources\FabImports'
+          $sourceRoot='D:\ANOMALIA\FabImports'
+          if(!(Test-Path $targetRoot) -or !(Test-Path $sourceRoot)){throw 'Expected OneDrive staging path or source root missing'}
+          $removed=0;$bytes=[long]0;$kept=0
+          foreach($f in Get-ChildItem -LiteralPath $targetRoot -File -Recurse){
+            $relative=$f.FullName.Substring($targetRoot.Length).TrimStart('\')
+            $src=Join-Path $sourceRoot $relative
+            if(!(Test-Path -LiteralPath $src -PathType Leaf)){$kept++;Write-Host ('KEEP_NO_SOURCE '+$f.FullName);continue}
+            $a=[WinAttr3]::GetFileAttributes($f.FullName)
+            if(($a -band 0x1000) -ne 0){$kept++;Write-Host ('KEEP_ONLINE_ONLY '+$f.FullName);continue}
+            if((Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $src -Algorithm SHA256).Hash){$kept++;Write-Host ('KEEP_HASH_MISMATCH '+$f.FullName);continue}
+            $n=[long]$f.Length;Remove-Item -LiteralPath $f.FullName -Force
+            $removed++;$bytes+=$n;Write-Host ('REMOVED_UNSYNCED_COPY bytes='+$n+' sourcePreserved=true path='+$relative)
+          }
+          $report=[ordered]@{removedCopies=$removed;bytesRemoved=$bytes;kept=$kept;sourceFilesDeleted=0;freeC_GiB=[math]::Round((Get-PSDrive C).Free/1GB,2)}
+          Write-Host ('UNSYNCED_COPY_CLEANUP='+($report|ConvertTo-Json -Compress))
