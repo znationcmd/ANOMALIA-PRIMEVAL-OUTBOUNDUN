@@ -1,0 +1,78 @@
+name: ANOMALIA - inventory gameplay actors, source, and asset candidates on the Windows project
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-skarvik-systems-source-audit.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Read source and asset inventory without opening or editing the project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue|Where-Object{-not $_.HasExited}).Count){throw 'Existing Unreal session preserved'}
+          $root='D:\ANOMALIA\unreal';$source=Join-Path $root 'Source\AnomaliaPrimeval';$content=Join-Path $root 'Content'
+          if(!(Test-Path $source) -or !(Test-Path $content)){throw 'Live D project source/content folder missing'}
+          $rules=[ordered]@{
+            zombies='(?i)zombie|infected|undead'
+            loot='(?i)loot|pickup|lootspawn|spawnpoint|inventory'
+            doors='(?i)door|gate|keypad|lock'
+            elevators='(?i)elevator|lift|ascenseur'
+            buildings='(?i)building|house|apartment|facade|interior|stair|floor|citysample'
+          }
+          $sourceFiles=@(Get-ChildItem -LiteralPath $source -Recurse -File -Include *.h,*.cpp)
+          $sourceMatches=[ordered]@{}
+          $automationTests=@()
+          foreach($key in $rules.Keys){$sourceMatches[$key]=@($sourceFiles|Where-Object{$_.Name -match $rules[$key]}|ForEach-Object{$_.FullName.Substring($source.Length+1)})}
+          foreach($file in $sourceFiles){
+            $raw=[IO.File]::ReadAllText($file.FullName)
+            foreach($m in [regex]::Matches($raw,'IMPLEMENT_[A-Z_]*AUTOMATION_TEST\s*\([^,]+,\s*"([^"]+)"')){$automationTests+=@{file=$file.Name;name=$m.Groups[1].Value}}
+          }
+          $assetMatches=[ordered]@{};$assetCounts=[ordered]@{}
+          foreach($key in $rules.Keys){$assetMatches[$key]=[System.Collections.Generic.List[string]]::new();$assetCounts[$key]=0}
+          $assetTotal=0
+          foreach($path in [IO.Directory]::EnumerateFiles($content,'*',[IO.SearchOption]::AllDirectories)){
+            $ext=[IO.Path]::GetExtension($path)
+            if($ext -notin @('.uasset','.umap')){continue}
+            $assetTotal++
+            $stem=[IO.Path]::GetFileNameWithoutExtension($path)
+            foreach($key in $rules.Keys){
+              if($stem -match $rules[$key]){
+                $assetCounts[$key]++
+                if($assetMatches[$key].Count -lt 80){$assetMatches[$key].Add($path.Substring($content.Length+1).Replace('\','/'))}
+              }
+            }
+          }
+          $report=[ordered]@{
+            state='READ_ONLY_LIVE_PROJECT_SOURCE_AND_ASSET_INVENTORY'
+            capturedUtc=[DateTime]::UtcNow.ToString('o')
+            project='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+            map='Content/Maps/PRIGIMALIA_SKARVIK_CITY_v1.umap'
+            sourceFileCount=$sourceFiles.Count
+            sourceMatches=$sourceMatches
+            automationTests=$automationTests
+            contentAssetFileCount=$assetTotal
+            assetNameCounts=$assetCounts
+            assetNameExamples=$assetMatches
+            noProjectAssetsModified=$true
+          }
+          $out=Join-Path $env:GITHUB_WORKSPACE 'skarvik-systems-inventory.json'
+          $report|ConvertTo-Json -Depth 8|Set-Content -LiteralPath $out -Encoding utf8
+          $report|ConvertTo-Json -Depth 8
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomalia-skarvik-systems-inventory
+          path: skarvik-systems-inventory.json
+          if-no-files-found: warn
