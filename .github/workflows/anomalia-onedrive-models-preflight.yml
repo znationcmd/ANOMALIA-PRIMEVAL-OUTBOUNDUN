@@ -1,0 +1,40 @@
+name: ANOMALIA - inventory 3D sources and OneDrive destination
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-onedrive-models-preflight.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  onedrive-preflight:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Inventory model source bytes and confirm the OneDrive sync target
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected PC runner'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal or the game is active; no file operation started'}
+          foreach($d in @('C:','D:')){$x=Get-PSDrive -Name $d.Substring(0,1);Write-Host ('DISK '+$d+' freeGiB='+[math]::Round($x.Free/1GB,2))}
+          $roots=@('D:\ANOMALIA\sketchfab','D:\ANOMALIA\FabImports','D:\ANOMALIAZ\01_Projet_Principal\unreal\Content')
+          foreach($r in $roots){Write-Host ('SOURCE_ROOT '+$r+' exists='+(Test-Path -LiteralPath $r -PathType Container))}
+          $extensions=@('.glb','.gltf','.fbx','.obj','.blend','.dae','.stl','.3ds','.ply','.usd','.usdz','.abc','.p3d')
+          $exclude='\\(Intermediate|Saved|DerivedDataCache|Binaries|Windows|Linux|Mac|Android|IOS)\\'
+          $files=@()
+          foreach($root in $roots){if(Test-Path -LiteralPath $root -PathType Container){$files+=@(Get-ChildItem -LiteralPath $root -File -Recurse -ErrorAction SilentlyContinue|Where-Object{$extensions -contains $_.Extension.ToLowerInvariant() -and $_.FullName -notmatch $exclude})}}
+          $sum=($files|Measure-Object -Property Length -Sum).Sum
+          Write-Host ('MODEL_INVENTORY count='+$files.Count+' bytes='+[int64]$sum+' GiB='+[math]::Round(($sum/1GB),2))
+          $files|Sort-Object Length -Descending|Select-Object -First 30|ForEach-Object{Write-Host ('LARGEST_MODEL bytes='+$_.Length+' path='+$_.FullName)}
+          $candidates=@()
+          foreach($n in @('OneDriveConsumer','OneDrive','OneDriveCommercial')){$v=[Environment]::GetEnvironmentVariable($n);if($v -and (Test-Path -LiteralPath $v -PathType Container)){$candidates+=@([pscustomobject]@{name=$n;path=$v})}}
+          foreach($key in @('HKCU:\Software\Microsoft\OneDrive\Accounts\Personal','HKCU:\Software\Microsoft\OneDrive\Accounts\Business1')){$v=(Get-ItemProperty -Path $key -ErrorAction SilentlyContinue).UserFolder;if($v -and (Test-Path -LiteralPath $v -PathType Container) -and !($candidates.path -contains $v)){$candidates+=@([pscustomobject]@{name='Registry';path=$v})}}
+          if(!$candidates.Count){Write-Host 'ONEDRIVE_SYNC_ROOT=NOT_FOUND'}
+          foreach($c in $candidates){$drive=[IO.Path]::GetPathRoot($c.path).Substring(0,1);$free=(Get-PSDrive -Name $drive -ErrorAction SilentlyContinue).Free;Write-Host ('ONEDRIVE_SYNC_ROOT name='+$c.name+' path='+$c.path+' localFreeGiB='+[math]::Round($free/1GB,2))}
+          Write-Host 'MODEL_AND_ONEDRIVE_PREFLIGHT_COMPLETE originalsPreserved=true'
