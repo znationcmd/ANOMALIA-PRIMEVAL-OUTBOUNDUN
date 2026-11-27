@@ -1,0 +1,27 @@
+name: ANOMALIA - verify the primary game launcher route
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-primary-launcher-route-audit.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  launcher-route:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Check what the main play shortcut actually selects without changing it
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script='D:\ANOMALIA\unreal\Launcher\Launch-Current-Anomalia.ps1'
+          $exists=Test-Path -LiteralPath $script
+          $source=if($exists){[IO.File]::ReadAllText($script)}else{''}
+          $info=[ordered]@{launcherScriptExists=$exists;referencesFinalSkarvikMap=($source -match 'PRIGIMALIA_SKARVIK_FINAL_v1');referencesIncompleteCityV1=($source -match 'PRIGIMALIA_SKARVIK_CITY_v1');selectsPackagedVersions=($source -match 'ANOMALIAZ.{0,30}Jeu.{0,30}Versions|Jeu\\Versions');launchesProjectThroughUnrealEditor=($source -match 'UnrealEditor\.exe|\.uproject');readsCurrentVersionManifest=($source -match '(?i)(current|latest|active).{0,40}(json|version)|(json|version).{0,40}(current|latest|active)');usesFinalPackagedBuild='D:\ANOMALIAZ\Jeu\Versions\SKARVIK-43226147989\Windows\AnomaliaPrimeval.exe'}
+          Write-Output ('ANOMALIA_PRIMARY_LAUNCHER_ROUTE='+($info|ConvertTo-Json -Compress))
