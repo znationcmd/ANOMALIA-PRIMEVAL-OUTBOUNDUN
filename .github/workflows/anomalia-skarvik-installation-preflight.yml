@@ -1,0 +1,54 @@
+name: ANOMALIA - preflight real SKARVIK map install on the Windows PC
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-skarvik-installation-preflight.yml]
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  preflight:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Read installed game, staged real map, dependencies, and disk capacity without changing files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $droot='D:\ANOMALIA\unreal'
+          $sroot='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $sroot '.skarvik-ci-stage-marker'
+          $trusted=(Test-Path -LiteralPath $marker) -and ((Get-Content -LiteralPath $marker -Raw).Trim() -eq '41188816555')
+          $maps=@(
+            @{name='installed-active';path=(Join-Path $droot 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap')},
+            @{name='installed-final';path=(Join-Path $droot 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap')},
+            @{name='stage-final';path=(Join-Path $sroot 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap')},
+            @{name='stage-graded';path=(Join-Path $sroot 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap')},
+            @{name='stage-islands';path=(Join-Path $sroot 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap')}
+          )
+          $mapInfo=@($maps|ForEach-Object{$i=Get-Item -LiteralPath $_.path -ErrorAction SilentlyContinue;[ordered]@{name=$_.name;exists=!!$i;sizeMiB=$(if($i){[math]::Round($i.Length/1MB,1)}else{$null});path=$_.path}})
+          $cfg=Join-Path $droot 'Config\DefaultEngine.ini'
+          $routing=@()
+          if(Test-Path $cfg){$routing=@(Get-Content $cfg|Where-Object{$_ -match 'GameDefaultMap|EditorStartupMap|GlobalDefaultGameMode'})}
+          $shortcuts=@()
+          $desktop=[Environment]::GetFolderPath('Desktop')
+          if(Test-Path $desktop){$shell=New-Object -ComObject WScript.Shell;foreach($f in Get-ChildItem -LiteralPath $desktop -Filter '*.lnk' -File -ErrorAction SilentlyContinue|Where-Object{$_.Name -match 'ANOMALIA|PRIGIMALIA'}){$l=$shell.CreateShortcut($f.FullName);$shortcuts+=@{name=$f.Name;target=([string]$l.TargetPath).Replace($env:USERPROFILE,'%USERPROFILE%');arguments=$l.Arguments}}}
+          $proc=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue|Select-Object -ExpandProperty ProcessName -Unique)
+          $citySource=@{}
+          foreach($root in @($droot,$sroot)){if(Test-Path (Join-Path $root 'Content\CitySample')){$citySource[$root]=[math]::Round((Get-ChildItem (Join-Path $root 'Content\CitySample') -File -Recurse -ErrorAction SilentlyContinue|Measure-Object Length -Sum).Sum/1GB,2)}else{$citySource[$root]=$null}}
+          $report=[ordered]@{state='READ_ONLY_INSTALLATION_PREFLIGHT';timestamp=(Get-Date).ToUniversalTime().ToString('o');dProjectExists=(Test-Path (Join-Path $droot 'AnomaliaPrimeval.uproject'));stageMarkerTrusted=$trusted;stageProjectExists=(Test-Path (Join-Path $sroot 'AnomaliaZPrigimalia.uproject'));maps=$mapInfo;installedMapRouting=$routing;desktopLaunchers=$shortcuts;activeUnrealProcesses=$proc;citySampleContentGiB=$citySource;diskFreeGiB=@{C=[math]::Round((Get-PSDrive C).Free/1GB,2);D=[math]::Round((Get-PSDrive D).Free/1GB,2)};readOnly=$true;filesChanged=$false}
+          $out=Join-Path $env:GITHUB_WORKSPACE 'anomalia-skarvik-install-preflight.json'
+          $report|ConvertTo-Json -Depth 7|Set-Content -LiteralPath $out -Encoding utf8
+          Write-Host ('SKARVIK_INSTALL_PREFLIGHT='+($report|ConvertTo-Json -Depth 7 -Compress))
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomalia-skarvik-install-preflight
+          path: anomalia-skarvik-install-preflight.json
+          if-no-files-found: warn
