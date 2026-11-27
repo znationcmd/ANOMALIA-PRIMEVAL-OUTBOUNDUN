@@ -52,7 +52,7 @@ jobs:
             $allLogPath=Join-Path $out 'combined-runtime.log'
             $logs|Set-Content -LiteralPath $allLogPath -Encoding utf8
             $hits=@($logs|Where-Object{$_ -match '(?i)PRIGIMALIA_SKARVIK_FINAL_v1|LogRHI:|D3D12|LogMaterial:|Shader|Error:|Warning:|Fatal|DXGI|device removed|crash|ensure'})
-            $hits|Select-Object -Last 120|ForEach-Object{Write-Host ('SM6_LOG '+$_.ToString())
+            $hits|Select-Object -Last 120|ForEach-Object{Write-Host ('SM6_LOG '+$_.ToString())}
             $mapObserved=[bool]($logs|Where-Object{$_ -match '(?i)(LoadMap|Browse|Bringing World).*(PRIGIMALIA_SKARVIK_FINAL_v1)'}|Select-Object -First 1)
             $materialErrors=@($logs|Where-Object{$_ -match 'LogMaterial: Error|Failed to compile Material|uncooked shader map'}).Count
           }finally{
