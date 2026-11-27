@@ -101,7 +101,7 @@ jobs:
                   raise RuntimeError("SKARVIK map could not be loaded")
               subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
               actors = subsystem.get_all_level_actors()
-              report["actor_count"] = len(actors)
+              report["loaded_actor_count"] = len(actors)
               records = []
               for actor in actors:
                   try:
@@ -109,15 +109,35 @@ jobs:
                       name = actor.get_name()
                       label = actor.get_actor_label()
                       tags = [str(t) for t in actor.tags]
-                      text = " ".join([cls, name, label] + tags)
                       loc = actor.get_actor_location()
-                      record = {"class":cls, "name":name, "label":label, "tags":tags,
-                                "location_cm":[round(loc.x,1), round(loc.y,1), round(loc.z,1)]}
-                      records.append(record)
-                  except Exception as e:
+                      records.append({"class":cls, "name":name, "label":label, "tags":tags,
+                                      "location_cm":[round(loc.x,1), round(loc.y,1), round(loc.z,1)]})
+                  except Exception:
                       continue
+              descriptor_records = []
+              try:
+                  descs = unreal.WorldPartitionBlueprintLibrary.get_actor_descs() or []
+                  for desc in descs:
+                      try:
+                          native = desc.native_class
+                          cls = native.get_path_name() if native else str(desc.class_)
+                          descriptor_records.append({
+                              "class":str(cls), "name":str(desc.name), "label":str(desc.label),
+                              "tags":[], "actor_path":str(desc.actor_path),
+                              "actor_package":str(desc.actor_package),
+                              "spatially_loaded":bool(desc.is_spatially_loaded)})
+                      except Exception:
+                          continue
+                  report["world_partition_descriptor_count"] = len(descs)
+                  report["world_partition_descriptor_error"] = None
+              except Exception as e:
+                  report["world_partition_descriptor_count"] = None
+                  report["world_partition_descriptor_error"] = str(e)
+              report["actor_count"] = len(descriptor_records) if descriptor_records else len(records)
+              report["map_actor_preview"] = (descriptor_records or records)[:100]
+              category_records = descriptor_records or records
               for category, pattern in patterns.items():
-                  hits = [r for r in records if pattern.search(" ".join([r["class"],r["name"],r["label"]] + r["tags"]))]
+                  hits = [r for r in category_records if pattern.search(" ".join([r["class"],r["name"],r["label"]] + r["tags"]))]
                   report["categories"][category] = {"count":len(hits), "actors":hits[:80]}
               content = Path(r"D:\ANOMALIA\unreal\Content")
               candidates = {k:[] for k in patterns}
